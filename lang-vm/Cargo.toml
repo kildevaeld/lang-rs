@@ -1,0 +1,17 @@
+[package]
+name = "lang-vm"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[features]
+default = ["std"]
+std = ["byteorder/std", "gc-arena/std"]
+trace = ["std"]
+
+
+[dependencies]
+gc-arena = { git = "https://github.com/kildevaeld/gc-arena", default-features = false}
+lang-macros = { path = "../lang-macros"}
+byteorder = { version = "1", default-features = true }

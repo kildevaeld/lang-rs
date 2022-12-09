@@ -6,5 +6,12 @@ members = [
     "lang-lexing",
     "lang-shared",
     "lang-parsing",
+    "lang-vm",
     "lang",
 ]
+
+
+[profile.release]
+lto = true
+strip = true
+panic = "abort"

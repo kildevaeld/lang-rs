@@ -1,3 +1,4 @@
+mod opcodes;
 mod pratt;
 mod tokens;
 mod utils;
@@ -12,4 +13,9 @@ pub fn tokens(input: TokenStream) -> TokenStream {
 #[proc_macro]
 pub fn precedence(input: TokenStream) -> TokenStream {
     pratt::run(input.into()).into()
+}
+
+#[proc_macro]
+pub fn opcodes(input: TokenStream) -> TokenStream {
+    opcodes::run(input)
 }
