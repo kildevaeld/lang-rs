@@ -3,16 +3,17 @@ use self::parse::RuleList;
 use proc_macro2::{Ident, TokenStream};
 use syn::{
     parse::{ParseStream, Parser},
+    token::Type,
     Block, Token,
 };
 
 mod codegen;
 mod parse;
 
-fn parse(stream: ParseStream) -> syn::Result<(Ident, Ident, Option<Block>, Vec<RuleList>)> {
+fn parse(stream: ParseStream) -> syn::Result<(Ident, Type, Option<Block>, Vec<RuleList>)> {
     let fn_name = stream.parse::<Ident>()?;
     let _ = stream.parse::<Token![->]>()?;
-    let ret_name = stream.parse::<Ident>()?;
+    let ret_name = stream.parse::<Type>()?;
 
     let mut primary = None;
 

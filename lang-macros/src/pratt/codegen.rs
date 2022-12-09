@@ -3,7 +3,7 @@ use crate::utils::lang_parsing;
 use super::parse::{RuleItem, RuleList, Token as ParseToken};
 use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote};
-use syn::Block;
+use syn::{token::Type, Block};
 
 impl ParseToken {
     fn peek(&self) -> TokenStream {
@@ -31,7 +31,7 @@ impl ParseToken {
 
 pub struct Input {
     pub module: Ident,
-    pub return_type: Ident,
+    pub return_type: Type,
     pub primary: Option<Block>,
     pub rules: Vec<RuleList>,
 }
