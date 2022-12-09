@@ -136,7 +136,6 @@ fn create_tokens(crate_name: &Ident, input: &Tokens) -> TokenStream {
     quote!(
 
         #[macro_export]
-        #[macro_use]
         macro_rules! Token {
             #(#tokens)*
         }
