@@ -129,8 +129,8 @@ impl<'gc, 'a> BytecodeReader<'gc, 'a> {
     }
 
     #[inline]
-    pub fn read_offset(&mut self) -> Option<u16> {
-        let offset = byteorder::BE::read_u16(&self.closure.chunk().opcodes()[*self.ip..]);
+    pub fn read_offset(&mut self) -> Option<i16> {
+        let offset = byteorder::BE::read_i16(&self.closure.chunk().opcodes()[*self.ip..]);
         *self.ip += 2;
         Some(offset)
     }
@@ -157,7 +157,7 @@ impl<'gc, 'a> BytecodeReader<'gc, 'a> {
     }
 
     #[inline]
-    pub fn to_offset(&mut self, offset: u16) {
+    pub fn to_offset(&mut self, offset: i16) {
         *self.ip += offset as usize;
     }
 }

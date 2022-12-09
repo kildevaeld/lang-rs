@@ -114,7 +114,7 @@ impl Code {
             Jump(section) => {
                 let current = ctx.opcodes.len() + 3;
                 let idx = ctx.section_map[section.0];
-                let idx = (idx - current) as u16;
+                let idx = (idx - current) as i16;
 
                 ctx.push(Opcode::Jump);
                 ctx.push(idx);
@@ -122,7 +122,7 @@ impl Code {
             JumpIfFalse(section) => {
                 let current = ctx.opcodes.len() + 3;
                 let idx = ctx.section_map[section.0];
-                let idx = (idx - current) as u16;
+                let idx = (idx - current) as i16;
 
                 ctx.push(Opcode::JumpIfFalse);
                 ctx.push(idx);

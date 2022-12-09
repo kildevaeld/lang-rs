@@ -30,10 +30,18 @@ impl Byte for u8 {
     }
 }
 
-impl Byte for u16 {
+// impl Byte for u16 {
+//     fn into_byte(self, opcodes: &mut Vec<u8>) {
+//         let idx = opcodes.len();
+//         opcodes.resize(opcodes.len() + 2, 0);
+//         byteorder::BE::write_u16(&mut opcodes[idx..], self);
+//     }
+// }
+
+impl Byte for i16 {
     fn into_byte(self, opcodes: &mut Vec<u8>) {
         let idx = opcodes.len();
         opcodes.resize(opcodes.len() + 2, 0);
-        byteorder::BE::write_u16(&mut opcodes[idx..], self);
+        byteorder::BE::write_i16(&mut opcodes[idx..], self);
     }
 }
