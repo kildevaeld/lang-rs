@@ -15,3 +15,4 @@ trace = ["std"]
 gc-arena = { git = "https://github.com/kildevaeld/gc-arena", default-features = false}
 lang-macros = { path = "../lang-macros"}
 byteorder = { version = "1", default-features = false }
+hashbrown = { version = "0.13"}

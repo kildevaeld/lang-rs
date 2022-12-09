@@ -21,3 +21,8 @@ lang-macros = { path ="../lang-macros", optional = true}
 path = "examples/lang.rs"
 name = "lang"
 required-features = ["macros"]
+
+[[example]]
+path = "examples/ast.rs"
+name = "ast"
+required-features = ["macros"]

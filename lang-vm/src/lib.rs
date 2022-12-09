@@ -13,6 +13,7 @@ mod call_frame;
 mod call_stack;
 mod callback;
 pub mod error;
+mod module;
 mod native;
 mod stack;
 mod thread;

@@ -1,3 +1,6 @@
+mod codegen;
+mod parse;
+
 use inflector::Inflector;
 use proc_macro2::{Group, Ident, Span, TokenStream};
 use quote::{quote, ToTokens};
@@ -182,6 +185,11 @@ pub fn run(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
         #(#items)*
     )
     .into()*/
-    println!("{:#?}", input);
+    // println!("{:#?}", input);
+
+    let types = parse::parse(input.into());
+
+    let out = codegen::create(types);
+
     quote!().into()
 }

@@ -1,4 +1,4 @@
-mod ast;
+// mod ast;
 mod opcodes;
 mod pratt;
 mod tokens;
@@ -21,7 +21,7 @@ pub fn opcodes(input: TokenStream) -> TokenStream {
     opcodes::run(input)
 }
 
-#[proc_macro]
-pub fn ast(input: TokenStream) -> TokenStream {
-    ast::run(input)
-}
+// #[proc_macro]
+// pub fn ast(input: TokenStream) -> TokenStream {
+//     ast::run(input)
+// }
