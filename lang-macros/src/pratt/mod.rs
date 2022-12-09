@@ -3,8 +3,7 @@ use self::parse::RuleList;
 use proc_macro2::{Ident, TokenStream};
 use syn::{
     parse::{ParseStream, Parser},
-    token::Type,
-    Block, Token,
+    Block, Token, Type,
 };
 
 mod codegen;

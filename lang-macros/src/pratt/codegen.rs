@@ -3,7 +3,7 @@ use crate::utils::lang_parsing;
 use super::parse::{RuleItem, RuleList, Token as ParseToken};
 use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote};
-use syn::{token::Type, Block};
+use syn::{Block, Type};
 
 impl ParseToken {
     fn peek(&self) -> TokenStream {
