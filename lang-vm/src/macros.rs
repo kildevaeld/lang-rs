@@ -1,7 +1,7 @@
 #[cfg(feature = "trace")]
 macro_rules! trace {
     ($($arg:tt)+) => {
-        std::println!($($arg)+)
+        std::eprintln!($($arg)+)
     };
 }
 

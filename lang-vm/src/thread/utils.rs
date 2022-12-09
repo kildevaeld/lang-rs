@@ -53,30 +53,3 @@ fn call_return<'gc>(_thread: Thread<'gc>, state: &mut ThreadState<'gc>, returns:
         None => state.result = Some(returns),
     }
 }
-
-/*pub struct ClosureReader<'gc, 'a> {
-    closure: &'a Closure<'gc>,
-    ip: &'a mut usize,
-}
-
-impl<'gc, 'a> Reader<'gc> for ClosureReader<'gc, 'a> {
-    fn opcode(&mut self) -> Option<Opcode> {
-        todo!()
-    }
-
-    fn read_constant(&mut self) -> Option<Value<'gc>> {
-        todo!()
-    }
-
-    fn read_offset(&mut self) -> Option<u16> {
-        todo!()
-    }
-
-    fn read_local(&mut self) -> Option<u8> {
-        todo!()
-    }
-
-    fn ip(&self) -> usize {
-        todo!()
-    }
-}*/
