@@ -22,3 +22,5 @@ mod vm;
 mod heap;
 
 pub use self::{native::NativeFunc, value::*, vm::Vm};
+
+pub use gc_arena as gc;

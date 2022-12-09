@@ -1,8 +1,8 @@
-use gc_arena::{Collect, MutationContext};
 use lang_vm::{
     bytecode::builder::{self, expr, BinaryOperator, Code},
     error,
     error::Result,
+    gc::{Collect, MutationContext},
     Callable, Closure, NativeFunc, Value, Vm,
 };
 

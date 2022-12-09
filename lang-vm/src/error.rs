@@ -1,6 +1,5 @@
-use core::fmt;
-
 use crate::thread::ThreadMode;
+use core::fmt;
 
 pub type Result<T> = core::result::Result<T, Error>;
 
@@ -11,8 +10,25 @@ pub enum Error {
 }
 
 impl fmt::Display for Error {
-    fn fmt(&self, _f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        todo!()
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Error::BadThread(inner) => {
+                write!(f, "bad thread error: {}", inner)
+            }
+            Error::InvalidStackIndex { index } => {
+                write!(f, "invalid stack: {}", index)
+            }
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for Error {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Error::BadThread(error) => Some(error),
+            _ => None,
+        }
     }
 }
 
@@ -23,10 +39,13 @@ pub struct BadThreadMode {
 }
 
 impl fmt::Display for BadThreadMode {
-    fn fmt(&self, _f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        todo!()
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "expected {:?}, found: {:?}", self.expected, self.found)
     }
 }
+
+#[cfg(feature = "std")]
+impl std::error::Error for BadThreadMode {}
 
 impl From<BadThreadMode> for Error {
     fn from(err: BadThreadMode) -> Self {
