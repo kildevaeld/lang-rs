@@ -1,5 +1,3 @@
-use std::println;
-
 use gc_arena::MutationContext;
 
 use crate::{
@@ -84,8 +82,6 @@ impl<'gc, 'a> Function<'gc, 'a> {
             .enumerate()
             .map(|(idx, _)| (idx + self.args) as u8)
             .collect::<Vec<_>>();
-
-        println!("locals: {:?}", local_map);
 
         let mut ctx = BuildCtx {
             section_map,

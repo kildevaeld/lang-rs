@@ -1,19 +1,15 @@
-use std::println;
-
-use gc_arena::{Collect, GcCell, MutationContext};
-
+use super::{
+    execute::execute,
+    state::{ThreadMode, ThreadState},
+    utils::call_callable,
+};
 use crate::{
     call_frame::CallFrame,
     error::Result,
     thread::bytecode_frame::BytecodeFrame,
     value::{Callable, Value},
 };
-
-use super::{
-    execute::execute,
-    state::{ThreadMode, ThreadState},
-    utils::call_callable,
-};
+use gc_arena::{Collect, GcCell, MutationContext};
 
 #[derive(Clone, Copy, Debug, Collect)]
 #[collect(no_drop)]
@@ -32,8 +28,9 @@ impl<'gc> Thread<'gc> {
         }
     }
 
+    #[cfg(feature = "std")]
     pub fn dump_stack(&self) {
-        println!("stack {:#?}", self.0.read().stack);
+        std::println!("stack {:#?}", self.0.read().stack);
     }
 
     pub fn start(

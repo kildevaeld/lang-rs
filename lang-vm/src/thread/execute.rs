@@ -1,5 +1,3 @@
-use std::println;
-
 use super::bytecode_frame::BytecodeFrame;
 use crate::{bytecode::Opcode, error::Result, stack::StackContext, Value};
 use gc_arena::MutationContext;
@@ -19,13 +17,6 @@ pub fn execute<'gc>(
                 break;
             }
         };
-
-        /*println!(
-            "IP {} {} {:?}",
-            reader.ip() - 1,
-            opcode,
-            reader.stack().top()
-        );*/
 
         match opcode {
             Opcode::Pop => {

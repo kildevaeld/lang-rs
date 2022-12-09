@@ -1,8 +1,5 @@
-use std::println;
-
-use crate::bytecode::Opcode;
-
 use super::ctx::BuildCtx;
+use crate::bytecode::Opcode;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct LocalId(pub(crate) usize);

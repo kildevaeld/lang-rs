@@ -1,4 +1,3 @@
-#[cfg(feature = "std")]
 pub mod builder;
 mod chunk;
 mod function;
