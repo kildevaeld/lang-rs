@@ -5,7 +5,7 @@ use super::code::{ArgId, BinaryOperator, Code, ConstantId, LocalId, UnaryOperato
 pub struct Top;
 
 impl Expression for Top {
-    fn into_code(self, codes: &mut Vec<Code>) {}
+    fn into_code(self, _codes: &mut Vec<Code>) {}
 }
 
 pub trait Expression {

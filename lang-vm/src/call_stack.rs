@@ -22,9 +22,9 @@ impl<'gc> CallStack<'gc> {
         self.stack.push(frame);
     }
 
-    pub fn len(&self) -> usize {
+    /*pub fn len(&self) -> usize {
         self.stack.len()
-    }
+    }*/
 
     pub fn pop(&mut self) -> Option<CallFrame<'gc>> {
         self.stack.pop()

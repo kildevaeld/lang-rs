@@ -1,8 +1,5 @@
-use core::marker::PhantomData;
-
-use byteorder::ByteOrder;
-
 use crate::{bytecode::Opcode, heap::Vec};
+use byteorder::ByteOrder;
 
 pub struct BuildCtx {
     pub section_map: Vec<usize>,

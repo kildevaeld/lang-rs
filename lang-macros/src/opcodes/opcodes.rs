@@ -156,7 +156,7 @@ pub fn run(input: TokenStream) -> TokenStream {
             ),
             Some(Variable::Offset) => quote!(
                 let offset = byteorder::BE::read_u16(&opcodes[ip+1..]);
-                write!(writer, "{:0>5} {:<20} {} => {}", ip, self, ip, ip + offset as usize);
+                write!(writer, "{:0>5} {:<20} {} => {}", ip, self, ip, ip + offset as usize)?;
             ),
             None => quote!(
                 write!(writer, "{:0>5} {:20}", ip, self)?;

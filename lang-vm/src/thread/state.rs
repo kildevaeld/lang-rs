@@ -21,7 +21,7 @@ pub struct ThreadState<'gc> {
 }
 
 impl<'gc> ThreadState<'gc> {
-    pub fn new(mc: MutationContext<'gc, '_>) -> ThreadState<'gc> {
+    pub fn new(_mc: MutationContext<'gc, '_>) -> ThreadState<'gc> {
         ThreadState {
             stack: Stack::default(),
             call_stack: CallStack::default(),
@@ -59,7 +59,7 @@ impl<'gc> ThreadState<'gc> {
                     CallFrame::Callback { .. }
                     //| CallFrame::Continuation { .. }
                     | CallFrame::ByteCode { .. } => ThreadMode::Running,
-                    _ => ThreadMode::Stopped,
+                    // _ => ThreadMode::Stopped,
                     //Frame::StartCoroutine(_) | Frame::ResumeCoroutine => ThreadMode::Suspended,
                 },
             }

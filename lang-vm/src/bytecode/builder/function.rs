@@ -15,7 +15,7 @@ use super::{
 };
 
 pub struct Local<'gc> {
-    name: String<'gc>,
+    pub name: String<'gc>,
 }
 
 pub struct Function<'gc, 'a> {

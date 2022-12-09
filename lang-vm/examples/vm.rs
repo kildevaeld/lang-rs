@@ -1,12 +1,9 @@
-use gc_arena::{Collect, Gc, MutationContext};
+use gc_arena::{Collect, MutationContext};
 use lang_vm::{
-    bytecode::{
-        builder::{self, expr, BinaryOperator, Code, Top},
-        Chunk, Function, Opcode,
-    },
+    bytecode::builder::{self, expr, BinaryOperator, Code},
     error,
     error::Result,
-    Callable, Closure, NativeFunc, String, Value, Vm,
+    Callable, Closure, NativeFunc, Value, Vm,
 };
 
 #[derive(Debug, Collect)]
@@ -47,8 +44,6 @@ fn create_fib<'gc, 'a>(mc: MutationContext<'gc, 'a>) -> Closure<'gc> {
 
     let func = func.build();
 
-    //println!("{}", func.chunk());
-
     Closure::new(mc, func, 0)
 }
 
@@ -57,33 +52,6 @@ fn main() {
 
     vm.mutate(|ctx| {
         let fib = create_fib(*ctx);
-
-        /*let ops = vec![
-            Opcode::GetLocal as u8,
-            1,
-            Opcode::Constant as u8,
-            0,
-            Opcode::Call1 as u8,
-            Opcode::Return as u8,
-        ];
-
-        let consts = vec![Value::String(String::new_static("Hello, World!"))];
-
-        let chunk = Closure::new(*ctx, Function::new(Chunk::new(ops, consts), 1), 0);
-
-        // println!("{}", chunk.chunk());
-
-        let ret = ctx
-            .call(
-                Callable::Closure(chunk),
-                &[Value::Callable(Callable::Native(Gc::allocate(
-                    ctx.mc,
-                    Box::new(Test),
-                )))],
-            )
-            .unwrap();*/
-
-        // println!("Ret {}", ret.as_string().unwrap());
 
         let ret = ctx
             .call(Callable::Closure(fib), &[Value::Integer(20)])

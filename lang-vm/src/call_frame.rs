@@ -13,6 +13,7 @@ pub enum CallFrame<'gc> {
         /// Index of the closure in the stack
         bottom: usize,
     },
+    #[allow(unused)]
     Callback {
         callback: Gc<'gc, Box<dyn NativeFunc<'gc>>>,
     },

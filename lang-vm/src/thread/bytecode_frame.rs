@@ -140,9 +140,9 @@ impl<'gc, 'a> BytecodeReader<'gc, 'a> {
         self.read_byte().map(|i| self.bottom as u8 + i)
     }
 
-    pub fn ip(&self) -> usize {
+    /*pub fn ip(&self) -> usize {
         *self.ip
-    }
+    }*/
 
     #[inline]
     pub fn stack(&mut self) -> &mut Stack<'gc> {

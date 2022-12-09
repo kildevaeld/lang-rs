@@ -1,5 +1,5 @@
 use super::{bytecode::Bytecode, code::SectionId, ctx::BuildCtx, expression::Expression};
-use crate::heap::{vec, BTreeMap, Vec};
+use crate::heap::{vec, Vec};
 
 #[derive(Debug)]
 pub struct Sections {
