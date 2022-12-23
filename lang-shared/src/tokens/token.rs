@@ -5,7 +5,7 @@ use super::{literal_bool::LiteralBool, Ident, Literal, LiteralNumber, LiteralStr
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Token<'a> {
-    Ident(Ident<'a>),
+    Ident(#[cfg_attr(feature = "serde", serde(borrow))] Ident<'a>),
     Punct(Punct<'a>),
     Literal(Literal<'a>),
 }
