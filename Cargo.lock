@@ -47,15 +47,16 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 [[package]]
 name = "gc-arena"
 version = "0.2.2"
-source = "git+https://github.com/kildevaeld/gc-arena#89fa66ad66eec29f3584f777222bc8e376148ed6"
+source = "git+https://github.com/kildevaeld/gc-arena#0d3485319d804231cace085f4792a9b4b83e6fd8"
 dependencies = [
  "gc-arena-derive",
+ "hashbrown",
 ]
 
 [[package]]
 name = "gc-arena-derive"
 version = "0.2.2"
-source = "git+https://github.com/kildevaeld/gc-arena#89fa66ad66eec29f3584f777222bc8e376148ed6"
+source = "git+https://github.com/kildevaeld/gc-arena#0d3485319d804231cace085f4792a9b4b83e6fd8"
 dependencies = [
  "proc-macro2",
  "quote",

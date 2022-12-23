@@ -1,3 +1,5 @@
+use core::hash::Hash;
+
 use gc_arena::MutationContext;
 
 use super::Function;
@@ -10,4 +12,13 @@ pub enum ModuleItem<'gc, 'a> {
 pub struct Module<'gc, 'a> {
     mc: MutationContext<'gc, 'a>,
     items: HashMap<String<'gc>, ModuleItem<'gc, 'a>>,
+}
+
+impl<'gc, 'a> Module<'gc, 'a> {
+    pub fn new(mc: MutationContext<'gc, 'a>) -> Module<'gc, 'a> {
+        Module {
+            mc,
+            items: HashMap::default(),
+        }
+    }
 }
