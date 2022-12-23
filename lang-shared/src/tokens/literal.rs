@@ -10,6 +10,7 @@ pub enum LiteralType {
     Custom(&'static str),
 }
 
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Literal<'a> {
     pub lexeme: &'a str,
