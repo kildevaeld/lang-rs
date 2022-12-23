@@ -9,6 +9,8 @@ edition = "2021"
 default = ["alloc"]
 alloc = []
 std = []
+serde = ["dep:serde"]
 
 [dependencies]
 unicode-segmentation = { version = "1" }
+serde = { version = "1", features = ["derive"], optional = true}

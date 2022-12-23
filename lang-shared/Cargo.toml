@@ -8,12 +8,13 @@ edition = "2021"
 [features]
 default = []
 parsing = ["lang-parsing", "unicode-segmentation"]
+serde = ["dep:serde", "lang-lexing/serde"]
 
 [dependencies]
 lang-lexing = { path = "../lang-lexing" }
 lang-parsing = { path = "../lang-parsing", optional = true }
 unicode-segmentation = { version = "1", optional = true }
-
+serde = { version = "1", features = ["derive"], optional = true}
 
 [[example]]
 path = "examples/shared.rs"

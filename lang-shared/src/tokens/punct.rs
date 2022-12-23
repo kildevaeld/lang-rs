@@ -1,11 +1,13 @@
 use lang_lexing::{Extract, Span};
 
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Spacing {
     Alone,
     Joint,
 }
 
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Punct<'a> {
     pub lexeme: &'a str,

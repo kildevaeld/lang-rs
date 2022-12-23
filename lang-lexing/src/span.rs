@@ -4,6 +4,7 @@ pub trait WithSpan {
     fn span(&self) -> &Span;
 }
 
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Span {
     pub start: usize,

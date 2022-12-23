@@ -1,5 +1,6 @@
 use lang_lexing::{Extract, Span};
 
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Ident<'a> {
     pub lexeme: &'a str,
