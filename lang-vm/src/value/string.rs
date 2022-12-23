@@ -89,3 +89,9 @@ impl<'gc> AsRef<str> for String<'gc> {
         self.as_str()
     }
 }
+
+impl<'gc> core::borrow::Borrow<str> for String<'gc> {
+    fn borrow(&self) -> &str {
+        self.as_str()
+    }
+}
