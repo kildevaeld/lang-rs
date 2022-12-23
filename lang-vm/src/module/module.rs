@@ -31,3 +31,9 @@ pub struct LoadedState<'gc> {
 }
 
 impl<'gc> ModuleState<'gc> for LoadedState<'gc> {}
+
+impl<'gc> Module<'gc, LoadedState<'gc>> {
+    pub fn get(&self, name: impl AsRef<str>) -> Option<Value<'gc>> {
+        self.state.exports.get(name.as_ref()).map(|m| *m)
+    }
+}
