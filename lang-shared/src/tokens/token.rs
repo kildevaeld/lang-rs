@@ -2,6 +2,7 @@ use lang_lexing::{Lexer, LexerFactory, Span, TokenRef, WithSpan};
 
 use super::{literal_bool::LiteralBool, Ident, Literal, LiteralNumber, LiteralString, Punct};
 
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Token<'a> {
     Ident(Ident<'a>),
