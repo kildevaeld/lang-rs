@@ -5,10 +5,10 @@ use super::{
     section::{Section, Sections},
 };
 use crate::{
-    bytecode::Chunk,
+    bytecode::{Chunk, Opcode},
     heap::{HashMap, Vec},
     string_interner::StringInterner,
-    String, Value,
+    Callable, Closure, String, Value,
 };
 use gc_arena::{Collect, Gc, GcCell, MutationContext};
 
@@ -156,17 +156,30 @@ impl<'gc> Module<'gc> {
         self.scope.resolve_local(name)
     }
 
-    pub fn build(&self) -> crate::bytecode::Function<'gc> {
+    pub fn build(&self, mc: MutationContext<'gc, '_>) -> crate::bytecode::Function<'gc> {
+        let mut constants = Vec::default();
+        let mut opcodes: Vec<u8> = Vec::default();
+
         for item in self.items.iter() {
             match item {
                 ModuleItem::Func(func) => {
                     let func = func.build();
-                    return func;
+                    constants.push(Value::Callable(Callable::Closure(Closure::new(
+                        mc, func, 0,
+                    ))));
+
+                    let idx = constants.len() - 1;
+
+                    opcodes.push(Opcode::Constant as u8);
+                    opcodes.push(idx as u8);
+                    opcodes.push(Opcode::Export as u8);
                 }
             }
         }
 
-        todo!()
+        let chunk = Chunk::new(opcodes, constants);
+
+        crate::bytecode::Function::new(chunk, 0)
     }
 }
 

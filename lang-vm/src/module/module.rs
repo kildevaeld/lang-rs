@@ -26,6 +26,15 @@ impl<'gc> Module<'gc, ByteCodeState<'gc>> {
     }
 }
 
+impl<'gc> Module<'gc, ()> {
+    pub fn from_chunk(chunk: Chunk<'gc>) -> Module<'gc, ByteCodeState<'gc>> {
+        Module {
+            state: ByteCodeState { chunk },
+            _p: PhantomData,
+        }
+    }
+}
+
 pub struct LoadedState<'gc> {
     pub(crate) exports: HashMap<String<'gc>, Value<'gc>>,
 }

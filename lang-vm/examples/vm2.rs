@@ -47,7 +47,7 @@ fn create_fib<'gc, 'a>(mc: MutationContext<'gc, 'a>) -> Closure<'gc> {
         .push(mc, BinaryOperator::Add)
         .push(mc, Code::Return);
 
-    println!("ctx: {}", module.build().chunk());
+    println!("ctx: {}", module.build(mc).chunk());
 
     todo!()
 }
