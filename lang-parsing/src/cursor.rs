@@ -13,8 +13,8 @@ pub struct Cursor<'a, 'b, T> {
 impl<'a, 'b, T> Clone for Cursor<'a, 'b, T> {
     fn clone(&self) -> Self {
         Cursor {
-            input: self.input.clone(),
-            tokens: self.tokens.clone(),
+            input: self.input,
+            tokens: self.tokens,
             current: self.current,
         }
     }

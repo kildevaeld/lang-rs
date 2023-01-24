@@ -178,12 +178,9 @@ impl Rule {
 
         if last == first {
             false
-        } else if first.is_prec() && last.is_prec() && self.items.len() == 3 {
-            true
-        } else if first.is_prec() && self.items.len() > 1 {
-            true
         } else {
-            false
+            (first.is_prec() && last.is_prec() && self.items.len() == 3)
+                || first.is_prec() && self.items.len() > 1
         }
     }
 }

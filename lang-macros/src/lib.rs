@@ -1,5 +1,6 @@
 // mod ast;
 mod opcodes;
+mod parse;
 mod pratt;
 mod tokens;
 mod utils;
