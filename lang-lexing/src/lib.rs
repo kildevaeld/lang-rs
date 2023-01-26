@@ -1,26 +1,31 @@
-#![cfg_attr(not(feature = "std"), no_std)]
+#![no_std]
 
-#[cfg(feature = "alloc")]
 extern crate alloc;
+
+#[cfg(test)]
+extern crate std;
 
 mod cursor;
 mod error;
 mod extract;
 mod lexer;
 mod span;
-pub mod utils;
+mod string_ext;
+
+#[cfg(feature = "tokens")]
+pub mod tokens;
 
 pub use self::{
-    cursor::Cursor,
+    cursor::{ChildCursor, Cursor},
     error::{Error, Result},
     extract::Extract,
-    lexer::*,
-    span::*,
+    lexer::{Lexer, LexerIterator},
+    span::{Span, WithSpan},
 };
 
-pub trait LexerFactory<'a>: Sized {
-    type Extract: Extract<'a, Self>;
-    fn create_lexer(input: &'a str) -> Lexer<'a, Self::Extract, Self>;
+pub trait LexerFactory<'a, O>: Sized {
+    type Extract: Extract<'a, O>;
+    fn create_lexer(input: &'a str) -> Lexer<'a, Self::Extract, O>;
 }
 
 pub trait TokenRef<T> {

@@ -12,7 +12,7 @@ pub struct ParseState<'a, T> {
 impl<'a, T> ParseState<'a, T> {
     pub fn new(input: &'a str) -> Result<ParseState<'a, T>, LexerError<'a>>
     where
-        T: LexerFactory<'a, T>,
+        T: LexerFactory<'a>,
     {
         let lexer = T::create_lexer(input);
         let stream = lexer.tokenize();

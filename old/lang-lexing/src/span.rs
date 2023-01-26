@@ -1,7 +1,7 @@
 use core::fmt;
 
 pub trait WithSpan {
-    fn span(&self) -> Span;
+    fn span(&self) -> &Span;
 }
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
@@ -35,7 +35,7 @@ impl<'a> From<(usize, &'a str)> for Span {
     }
 }
 
-impl fmt::Display for Span {
+impl<'a> fmt::Display for Span {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "[{}:{}]", self.start, self.end)
     }

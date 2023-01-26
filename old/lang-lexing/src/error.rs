@@ -1,26 +1,28 @@
+#[cfg(feature = "alloc")]
 use alloc::borrow::Cow;
 use core::fmt;
 
+use crate::Span;
+
 pub type Result<'a, T> = core::result::Result<T, Error<'a>>;
 
-#[derive(Debug, Clone, PartialEq)]
+#[cfg(feature = "alloc")]
+#[derive(Debug, Clone)]
 pub struct Error<'a> {
     pub message: Cow<'a, str>,
-    pub position: usize,
+    pub span: Span,
 }
 
-impl<'a> Error<'a> {
-    pub fn new<S: Into<Cow<'a, str>>>(position: usize, message: S) -> Error<'a> {
-        Error {
-            message: message.into(),
-            position,
-        }
-    }
+#[cfg(not(feature = "alloc"))]
+#[derive(Debug, Clone)]
+pub struct Error<'a> {
+    pub message: &'a str,
+    pub span: Span,
 }
 
 impl<'a> fmt::Display for Error<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}: {}", self.position, self.message)
+        write!(f, "{}: {}", self.span, self.message)
     }
 }
 

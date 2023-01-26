@@ -8,13 +8,12 @@ edition = "2021"
 [features]
 default = [ ]
 macros = ["lang-macros"]
-std = ["lang-lexing/std", "lang-parsing/std"]
-serde = ["lang-shared/serde"]
+# std = ["lang-lexing/std", "lang-parsing/std"]
+serde = ["lang-lexing/serde"]
 
 [dependencies]
-lang-lexing = { path = "../lang-lexing", features = ["alloc"]}
-lang-parsing = { path = "../lang-parsing" }
-lang-shared = { path = "../lang-shared", features = ["parsing"] }
+lang-lexing = { path = "../lang-lexing", features = ["tokens"]}
+lang-parsing = { path = "../lang-parsing", features = ["tokens"] }
 lang-macros = { path ="../lang-macros", optional = true}
 
 

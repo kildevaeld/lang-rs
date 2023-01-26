@@ -6,6 +6,7 @@ mod utils;
 
 use proc_macro::TokenStream;
 
+/// tokens
 #[proc_macro]
 pub fn tokens(input: TokenStream) -> TokenStream {
     tokens::run(input.into()).into()

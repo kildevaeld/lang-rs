@@ -4,7 +4,6 @@
 members = [
     "lang-macros",
     "lang-lexing",
-    "lang-shared",
     "lang-parsing",
     "lang-vm",
     "lang",

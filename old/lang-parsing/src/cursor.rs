@@ -33,7 +33,7 @@ impl<'a, 'b, T> Cursor<'a, 'b, T> {
     where
         T: WithSpan,
     {
-        self.current().map(|m| m.span()).unwrap_or_default()
+        self.current().map(|m| *m.span()).unwrap_or(Span::new(0, 0))
     }
 
     pub fn take<I>(&mut self) -> Option<I>
@@ -41,7 +41,7 @@ impl<'a, 'b, T> Cursor<'a, 'b, T> {
         T: TokenRef<I>,
         I: Clone,
     {
-        self.next(|item| item.value().cloned())
+        self.next(|item| item.value().map(|item| item.clone()))
     }
 
     pub fn error(&self, error: impl Into<Cow<'static, str>>) -> Error

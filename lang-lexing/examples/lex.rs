@@ -1,31 +1,29 @@
-use lang_lexing::{utils, Cursor, Error, Extract, Lexer, Span};
+use lang_lexing::{tokens::Token, Error, Extract, Lexer, LexerFactory, Span};
 
-#[derive(Debug)]
-pub struct Punct<'a> {
-    pub lexeme: &'a str,
-    pub span: Span,
+const INPUT: &str = r#"
+fn test() {
+    "Hello" + "World!" + "\n\" + 200 + 2003.1232
 }
+"#;
 
-impl<'a, O: From<Self>> Extract<'a, O> for Punct<'a> {
-    fn extract(token: &'a str, span: Span, cursor: &mut Cursor<'a>) -> Result<O, Error<'a>> {
-        if utils::is_ascii_punctuation(token) {
-            Ok(Punct {
-                lexeme: token,
-                span,
-            }
-            .into())
-        } else {
-            Err(cursor.error("expected punctionation"))
-        }
-    }
-}
+const STRING: &str = r#"
+"Hello, World!
+"#;
+
+const NUMBER: &str = r#"
+1 200 4003.0
+"#;
+
+const IDENT: &str = r#"
+test _test TeSds 😀sds
+"#;
 
 fn main() {
-    let lexer = Lexer::<Punct, Punct>::new("fn test() { mig }");
+    let lexer = Token::create_lexer(IDENT);
 
     let tokens = lexer
         .tokenize()
-        .filter_map(|ret| ret.ok())
+        // .filter_map(|ret| ret.ok())
         .collect::<Vec<_>>();
 
     println!("tokens: {:#?}", tokens);

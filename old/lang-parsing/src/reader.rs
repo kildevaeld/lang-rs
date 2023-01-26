@@ -6,7 +6,7 @@ use super::{
 };
 use alloc::borrow::Cow;
 use alloc::vec::Vec;
-use lang_lexing::WithSpan;
+use lang_lexing::{Span, WithSpan};
 
 #[derive(Debug, Clone)]
 pub struct TokenReader<'a, 'b, T> {
@@ -47,7 +47,7 @@ impl<'a, 'b, T> TokenReader<'a, 'b, T> {
         let _ = token;
         let mut cursor = Cursor {
             input: self.input,
-            tokens: self.tokens,
+            tokens: &self.tokens,
             current: self.current + offset,
         };
         P::Token::peek(&mut cursor)
@@ -66,7 +66,7 @@ impl<'a, 'b, T> TokenReader<'a, 'b, T> {
     {
         let mut cursor = Cursor {
             input: self.input,
-            tokens: self.tokens,
+            tokens: &self.tokens,
             current: self.current,
         };
 
@@ -86,9 +86,8 @@ impl<'a, 'b, T> TokenReader<'a, 'b, T> {
         let span = self
             .tokens
             .get(self.current)
-            .map(|token| token.span())
-            .unwrap_or_default();
-
+            .map(|token| *token.span())
+            .unwrap_or(Span::new(0, 0));
         Error::new(error, span)
     }
 }

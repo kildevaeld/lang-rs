@@ -1,5 +1,5 @@
 [package]
-name = "lang-lexing"
+name = "lang-parsing"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,10 +7,7 @@ edition = "2021"
 
 [features]
 default = []
-tokens = []
-serde = ["dep:serde"]
-
+std = ["lang-lexing/std"]
 
 [dependencies]
-unicode-segmentation = { version = "1" }
-serde = { version = "1", features = ["derive"], optional = true}
+lang-lexing = { path = "../lang-lexing", features = ["alloc"] }

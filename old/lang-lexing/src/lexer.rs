@@ -1,9 +1,10 @@
-use crate::{cursor::Cursor, Extract, Result};
 use core::{fmt, marker::PhantomData};
+use unicode_segmentation::UnicodeSegmentation;
+
+use crate::{cursor::Cursor, error::Result, extract::Extract, Span};
 
 pub struct Lexer<'a, T, O> {
-    input: &'a str,
-    iter: Cursor<'a>,
+    cursor: Cursor<'a>,
     skip_whitespace: bool,
     _o: PhantomData<O>,
     _t: PhantomData<T>,
@@ -12,6 +13,7 @@ pub struct Lexer<'a, T, O> {
 impl<'a, T, O> fmt::Debug for Lexer<'a, T, O> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("Lexer")
+            .field("cursor", &self.cursor)
             .field("skip_whitespace", &self.skip_whitespace)
             .finish()
     }
@@ -20,8 +22,11 @@ impl<'a, T, O> fmt::Debug for Lexer<'a, T, O> {
 impl<'a, T, O> Lexer<'a, T, O> {
     pub fn new(input: &'a str) -> Lexer<'a, T, O> {
         Lexer {
-            input,
-            iter: Cursor::new(input, true),
+            cursor: Cursor {
+                input,
+                iter: input.split_word_bound_indices().peekable(),
+                current_span: Span::default(),
+            },
             skip_whitespace: false,
             _o: PhantomData,
             _t: PhantomData,
@@ -29,7 +34,7 @@ impl<'a, T, O> Lexer<'a, T, O> {
     }
 
     pub fn input(&self) -> &'a str {
-        self.input
+        self.cursor.input()
     }
 
     pub fn skip_whitespace(mut self, skip: bool) -> Self {
@@ -44,7 +49,7 @@ where
 {
     pub fn tokenize(self) -> LexerIterator<'a, T, O> {
         LexerIterator {
-            iter: self.iter,
+            cursor: self.cursor,
             skip_whitespace: self.skip_whitespace,
             _o: PhantomData,
             _t: PhantomData,
@@ -66,27 +71,10 @@ where
 }
 
 pub struct LexerIterator<'a, T, O> {
-    iter: Cursor<'a>,
+    cursor: Cursor<'a>,
     skip_whitespace: bool,
     _o: PhantomData<O>,
     _t: PhantomData<T>,
-}
-
-impl<'a, T, O> LexerIterator<'a, T, O> {
-    pub fn next_non_whitespace(&mut self) -> Option<(usize, &'a str)> {
-        loop {
-            let (pos, next) = match self.iter.next_item() {
-                Some(ret) => ret,
-                None => return None,
-            };
-
-            if (next.as_bytes()[0] as char).is_whitespace() {
-                continue;
-            }
-
-            return Some((pos, next));
-        }
-    }
 }
 
 impl<'a, T, O> Iterator for LexerIterator<'a, T, O>
@@ -97,9 +85,9 @@ where
 
     fn next(&mut self) -> Option<Self::Item> {
         let ret = if self.skip_whitespace {
-            self.next_non_whitespace()
+            self.cursor.next_non_whitespace()
         } else {
-            self.iter.next_item()
+            self.cursor.next()
         };
 
         let (pos, next) = match ret {
@@ -107,6 +95,8 @@ where
             None => return None,
         };
 
-        self.iter.child(|child| T::extract(next, pos, child)).into()
+        let ret = T::extract(next, pos, &mut self.cursor);
+
+        Some(ret)
     }
 }

@@ -10,9 +10,6 @@ mod state;
 mod token;
 //mod types;
 
-#[cfg(feature = "tokens")]
-pub mod tokens;
-
 pub use self::{cursor::*, error::*, parse::*, reader::*, state::*, token::*};
 
 pub use lang_lexing::Span;
