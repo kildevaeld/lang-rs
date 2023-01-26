@@ -132,10 +132,7 @@ pub enum RuleItem {
 
 impl RuleItem {
     pub fn is_prec(&self) -> bool {
-        match self {
-            RuleItem::Prec { .. } => true,
-            _ => false,
-        }
+        matches!(self, RuleItem::Prec { .. })
     }
 }
 

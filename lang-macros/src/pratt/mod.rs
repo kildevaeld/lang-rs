@@ -45,12 +45,10 @@ fn parse(stream: ParseStream) -> syn::Result<(Ident, Type, Option<Block>, Vec<Ru
 pub fn run(stream: TokenStream) -> TokenStream {
     let (mod_name, return_type, primary, rules) = parse.parse2(stream).expect("parse:");
 
-    let output = codegen::run(Input {
+    codegen::run(Input {
         module: mod_name,
         return_type,
         primary,
         rules,
-    });
-
-    output
+    })
 }
