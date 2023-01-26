@@ -79,6 +79,25 @@ impl<'a, 'b, T> TokenReader<'a, 'b, T> {
         }
     }
 
+    pub fn child<F, R>(&mut self, mut func: F) -> Result<R, Error>
+    where
+        F: FnMut(&mut TokenReader<'a, '_, T>) -> Result<R, Error>,
+    {
+        let mut child = TokenReader {
+            input: self.input,
+            tokens: self.tokens,
+            current: self.current,
+        };
+
+        match func(&mut child) {
+            Ok(ret) => {
+                self.current = child.current;
+                Ok(ret)
+            }
+            e => e,
+        }
+    }
+
     pub fn error(&self, error: impl Into<Cow<'static, str>>) -> Error
     where
         T: WithSpan,
