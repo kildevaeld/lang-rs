@@ -37,32 +37,28 @@ pub struct Input {
 }
 
 fn build_precedence_list(rules: &[RuleList]) -> TokenStream {
-    let list = rules
-        .iter()
-        .enumerate()
-        .map(|(idx, rules)| {
-            rules
-                .rules
-                .iter()
-                .filter(|item| item.is_infix())
-                .filter_map(move |item| {
-                    let operator = &item.items[1];
-                    let item = match operator {
-                        RuleItem::Token(token) => token.peek(),
-                        RuleItem::Parse { parse, .. } => parse.peek(),
-                        _ => return None,
-                    };
+    let list = rules.iter().enumerate().flat_map(|(idx, rules)| {
+        rules
+            .rules
+            .iter()
+            .filter(|item| item.is_infix())
+            .filter_map(move |item| {
+                let operator = &item.items[1];
+                let item = match operator {
+                    RuleItem::Token(token) => token.peek(),
+                    RuleItem::Parse { parse, .. } => parse.peek(),
+                    _ => return None,
+                };
 
-                    let prec = idx as u8 + 1;
+                let prec = idx as u8 + 1;
 
-                    Some(quote!(
-                        if #item {
-                            #prec
-                        }
-                    ))
-                })
-        })
-        .flatten();
+                Some(quote!(
+                    if #item {
+                        #prec
+                    }
+                ))
+            })
+    });
 
     quote!(
         #(#list)else*
@@ -96,7 +92,7 @@ fn parse_token(name: impl Into<Option<Ident>>, token: &ParseToken) -> TokenStrea
         ParseToken::Operator(lit) => (vec![quote!(#lit)], format!("expected: {}", lit)),
 
         ParseToken::Any(any) => (
-            any.into_iter().map(|m| quote!(#m)).collect(),
+            any.iter().map(|m| quote!(#m)).collect(),
             format!(
                 "expected any of: {}",
                 any.iter()
@@ -121,73 +117,69 @@ fn parse_token(name: impl Into<Option<Ident>>, token: &ParseToken) -> TokenStrea
 }
 
 fn build_infix(rules: &[RuleList]) -> TokenStream {
-    let list = rules
-        .iter()
-        .enumerate()
-        .map(|(idx, rules)| {
-            rules
-                .rules
-                .iter()
-                .filter(|item| item.is_infix())
-                .filter_map(move |item| {
-                    let action = &item.action;
+    let list = rules.iter().enumerate().flat_map(|(idx, rules)| {
+        rules
+            .rules
+            .iter()
+            .filter(|item| item.is_infix())
+            .map(move |item| {
+                let action = &item.action;
 
-                    let prec = idx as u8 + 1;
+                let prec = idx as u8 + 1;
 
-                    let first = item
-                        .items
-                        .get(0)
-                        .map(|item| match item {
-                            RuleItem::Parse { name, .. } => {
-                                quote!(let #name = left;)
-                            }
-                            RuleItem::Prec { name } => {
-                                quote!(let #name = left;)
-                            }
-                            RuleItem::Token(_) => {
-                                panic!("token not supported at the place")
-                            }
-                        })
-                        .expect("first");
-
-                    let peek = item
-                        .items
-                        .get(1)
-                        .map(|item| match item {
-                            RuleItem::Prec { .. } => {
-                                quote!(__expression(&mut input.clone(), 0).is_ok())
-                            }
-                            RuleItem::Parse { parse, .. } => peek_token(parse),
-                            RuleItem::Token(token) => peek_token(token),
-                        })
-                        .unwrap();
-
-                    let types = item.items.iter().skip(1).map(|item| match item {
+                let first = item
+                    .items
+                    .get(0)
+                    .map(|item| match item {
+                        RuleItem::Parse { name, .. } => {
+                            quote!(let #name = left;)
+                        }
                         RuleItem::Prec { name } => {
-                            quote!(let #name = __expression(input, #prec)?;)
+                            quote!(let #name = left;)
                         }
-                        RuleItem::Parse { name, parse } => {
-                            //
-                            parse_token(name.clone(), parse)
+                        RuleItem::Token(_) => {
+                            panic!("token not supported at the place")
                         }
-                        RuleItem::Token(token) => {
-                            //
-                            parse_token(None, token)
-                        }
-                    });
+                    })
+                    .expect("first");
 
-                    Some(quote!(
-                        if #peek {
-                            #first
-                            #(
-                             #types
-                            )*
-                            #action
-                         }
-                    ))
-                })
-        })
-        .flatten();
+                let peek = item
+                    .items
+                    .get(1)
+                    .map(|item| match item {
+                        RuleItem::Prec { .. } => {
+                            quote!(__expression(&mut input.clone(), 0).is_ok())
+                        }
+                        RuleItem::Parse { parse, .. } => peek_token(parse),
+                        RuleItem::Token(token) => peek_token(token),
+                    })
+                    .unwrap();
+
+                let types = item.items.iter().skip(1).map(|item| match item {
+                    RuleItem::Prec { name } => {
+                        quote!(let #name = __expression(input, #prec)?;)
+                    }
+                    RuleItem::Parse { name, parse } => {
+                        //
+                        parse_token(name.clone(), parse)
+                    }
+                    RuleItem::Token(token) => {
+                        //
+                        parse_token(None, token)
+                    }
+                });
+
+                Some(quote!(
+                    if #peek {
+                        #first
+                        #(
+                         #types
+                        )*
+                        #action
+                     }
+                ))
+            })
+    });
 
     quote!(
         #(#list)else*
@@ -198,58 +190,55 @@ fn build_infix(rules: &[RuleList]) -> TokenStream {
 }
 
 fn build_prefix(rules: &[RuleList]) -> TokenStream {
-    let list = rules
-        .iter()
-        .map(|rules| {
-            rules
-                .rules
-                .iter()
-                .rev()
-                .filter(|item| !item.is_infix())
-                .map(move |item| {
-                    let names = item.items.iter().map(|item| {
+    let list = rules.iter().flat_map(|rules| {
+        rules
+            .rules
+            .iter()
+            .rev()
+            .filter(|item| !item.is_infix())
+            .map(move |item| {
+                let names = item.items.iter().map(|item| {
+                    //
+                    match item {
+                        RuleItem::Parse { name, parse } => parse_token(name.clone(), parse),
+                        RuleItem::Prec { name } => {
+                            quote!(let #name = __expression(input, 0)?;)
+                        }
+                        RuleItem::Token(token) => parse_token(None, token),
+                    }
+                });
+
+                let types = item
+                    .items
+                    .first()
+                    .map(|item| {
                         //
                         match item {
-                            RuleItem::Parse { name, parse } => parse_token(name.clone(), parse),
-                            RuleItem::Prec { name } => {
-                                quote!(let #name = __expression(input, 0)?;)
+                            RuleItem::Parse { parse, .. } => peek_token(parse),
+                            RuleItem::Prec { .. } => {
+                                quote!(__expression(&mut input.clone(), 0).is_ok())
                             }
-                            RuleItem::Token(token) => parse_token(None, token),
+                            RuleItem::Token(token) => peek_token(token),
                         }
-                    });
+                    })
+                    .unwrap();
 
-                    let types = item
-                        .items
-                        .first()
-                        .map(|item| {
-                            //
-                            match item {
-                                RuleItem::Parse { parse, .. } => peek_token(parse),
-                                RuleItem::Prec { .. } => {
-                                    quote!(__expression(&mut input.clone(), 0).is_ok())
-                                }
-                                RuleItem::Token(token) => peek_token(token),
-                            }
-                        })
-                        .unwrap();
+                let action = &item.action;
 
-                    let action = &item.action;
+                let items = quote!(
+                    if #types {
+                        #(
+                            #names
+                        )*
+                        #action
+                    }
 
-                    let items = quote!(
-                        if #types {
-                            #(
-                                #names
-                            )*
-                            #action
-                        }
+                );
 
-                    );
-
-                    //
-                    items
-                })
-        })
-        .flatten();
+                //
+                items
+            })
+    });
 
     quote!(
         if let Result::<_, Error>::Ok(ret) = __primary(input) {
