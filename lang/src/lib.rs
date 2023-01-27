@@ -10,6 +10,8 @@ pub mod lexing {
     pub use lang_lexing::*;
 }
 
+pub use lang_parsing::any_of;
+
 pub mod prelude {
     pub use lang_lexing::LexerFactory;
 }
