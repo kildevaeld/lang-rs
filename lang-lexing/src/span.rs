@@ -4,6 +4,20 @@ pub trait WithSpan {
     fn span(&self) -> Span;
 }
 
+#[cfg(feature = "either")]
+impl<L, R> WithSpan for either::Either<L, R>
+where
+    L: WithSpan,
+    R: WithSpan,
+{
+    fn span(&self) -> Span {
+        match self {
+            either::Either::Left(m) => m.span(),
+            either::Either::Right(m) => m.span(),
+        }
+    }
+}
+
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Span {

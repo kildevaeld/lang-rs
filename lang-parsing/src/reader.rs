@@ -28,11 +28,13 @@ impl<'a, 'b, T> TokenReader<'a, 'b, T> {
         self.tokens.get(self.current)
     }
 
+    /// Try to parse.
+    /// Will reset index pointer on error
     pub fn parse<P>(&mut self) -> Result<P, Error>
     where
         P: Parse<'a, T>,
     {
-        P::parse(self)
+        self.child(P::parse)
     }
 
     pub fn peek<P: Peek<'a, T>>(&self, token: P) -> bool {
@@ -79,7 +81,7 @@ impl<'a, 'b, T> TokenReader<'a, 'b, T> {
         }
     }
 
-    pub fn child<F, R>(&mut self, mut func: F) -> Result<R, Error>
+    fn child<F, R>(&mut self, mut func: F) -> Result<R, Error>
     where
         F: FnMut(&mut TokenReader<'a, '_, T>) -> Result<R, Error>,
     {

@@ -1,6 +1,10 @@
+use lang_lexing::WithSpan;
+
 use super::{error::Error, reader::TokenReader};
 
 pub trait Parse<'a, T>: Sized {
+    /// Parse self from a token reader
+    /// if this fails, the reader can be in an invalid state
     fn parse(state: &mut TokenReader<'a, '_, T>) -> Result<Self, Error>;
 }
 
@@ -9,7 +13,7 @@ macro_rules! parse_impl {
         impl<'a, T, $first: Parse<'a, T>> Parse<'a, T> for ($first,) {
             fn parse(state: &mut TokenReader<'a, '_, T>) -> Result<($first,), Error> {
                 Ok((
-                    $first::parse(state)?,
+                    state.parse()?,
                 ))
             }
         }
@@ -21,8 +25,8 @@ macro_rules! parse_impl {
 
             fn parse(state: &mut TokenReader<'a, '_, T>) -> Result<($first, $($rest),*), Error> {
                 Ok((
-                    $first::parse(state)?,
-                    $($rest::parse(state)?),*
+                    state.parse()?,
+                    $(state.parse::<$rest>()?),*
                 ))
             }
         }
@@ -42,49 +46,21 @@ where
         }
     }
 }
-/*
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub enum Either<L, R> {
-    Left(L),
-    Right(R),
-}
 
-impl<'a, L, R> Parse<'a> for Either<L, R>
+#[cfg(feature = "either")]
+impl<'a, T, L, R> Parse<'a, T> for either::Either<L, R>
 where
-    L: Parse<'a>,
-    R: Parse<'a>,
+    L: Parse<'a, T>,
+    R: Parse<'a, T>,
+    T: WithSpan,
 {
-    fn parse(state: &mut TokenReader<'a, '_>) -> Result<Self, Error> {
-        match L::parse(state) {
-            Ok(ret) => Ok(Either::Left(ret)),
-            Err(left_err) => match R::parse(state) {
-                Ok(ret) => Ok(Either::Right(ret)),
-                Err(right_err) => Err(Error::new(
-                    alloc::format!("expected {} or {}", left_err, right_err),
-                    right_err.span,
-                )),
-            },
-        }
+    #[allow(non_snake_case)]
+    fn parse(state: &mut TokenReader<'a, '_, T>) -> Result<Self, Error> {
+        use alloc::{format, vec};
+        use either::Either;
+        any_of!(state,
+            L => l { Either::Left(l) },
+            R => r { Either::Right(r) }
+        )
     }
 }
-
-impl<'a, T> Parse<'a> for Vec<T>
-where
-    T: Parse<'a>,
-{
-    fn parse(state: &mut TokenReader<'a, '_>) -> Result<Self, Error> {
-        let mut items = Vec::default();
-
-        loop {
-            if state.is_empty() {
-                break;
-            }
-
-            let item = state.parse::<T>()?;
-
-            items.push(item);
-        }
-
-        Ok(items)
-    }
-}*/

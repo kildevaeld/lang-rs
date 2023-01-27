@@ -2,6 +2,9 @@
 
 extern crate alloc;
 
+#[macro_use]
+mod macros;
+
 mod cursor;
 mod error;
 mod parse;
