@@ -74,7 +74,7 @@ where
             }
         }
 
-        Err(cursor.error("expected identifier"))
+        Err(cursor.error("expected keyword"))
     })
 }
 
@@ -101,10 +101,10 @@ where
     for part in token.split_word_bounds() {
         let punct = match cursor.take::<Punct<'a>>() {
             Some(punct) => punct,
-            None => return Err(cursor.error("expected punctuation")),
+            None => return Err(cursor.error("expected punctuation: {token:?}")),
         };
         if punct.lexeme != part {
-            return Err(cursor.error(alloc::format!("expcted: {:?}", token)));
+            return Err(cursor.error(alloc::format!("expected: {token:?}")));
         }
 
         if let Some(span) = span.as_mut() {
