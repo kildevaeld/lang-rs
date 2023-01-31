@@ -35,11 +35,11 @@ macro_rules! parse_impl {
 
 parse_impl!(T1 T2 T3 T4 T5 T6 T7 T8 T9 T10 T11 T12 T13 T14 T15 T16);
 
-impl<'a, T> Parse<'a, T> for Option<T>
+impl<'a, T, TOKEN> Parse<'a, TOKEN> for Option<T>
 where
-    T: Parse<'a, T>,
+    T: Parse<'a, TOKEN>,
 {
-    fn parse(state: &mut TokenReader<'a, '_, T>) -> Result<Self, Error> {
+    fn parse(state: &mut TokenReader<'a, '_, TOKEN>) -> Result<Self, Error> {
         match state.parse::<T>() {
             Ok(ret) => Ok(Some(ret)),
             Err(_) => Ok(None),
