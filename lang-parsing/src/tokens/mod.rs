@@ -101,7 +101,7 @@ where
     for part in token.split_word_bounds() {
         let punct = match cursor.take::<Punct<'a>>() {
             Some(punct) => punct,
-            None => return Err(cursor.error("expected punctuation: {token:?}")),
+            None => return Err(cursor.error(alloc::format!("expected punctuation: {token:?}"))),
         };
         if punct.lexeme != part {
             return Err(cursor.error(alloc::format!("expected: {token:?}")));
