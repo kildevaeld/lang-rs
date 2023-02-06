@@ -1,4 +1,4 @@
-use crate::Span;
+use crate::{Span, WithSpan};
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -17,4 +17,10 @@ pub struct Literal<'a> {
     pub lexeme: &'a str,
     pub span: Span,
     pub kind: LiteralType<'a>,
+}
+
+impl<'a> WithSpan for Literal<'a> {
+    fn span(&self) -> Span {
+        self.span
+    }
 }

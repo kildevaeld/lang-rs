@@ -1,4 +1,4 @@
-use crate::{cursor::ChildCursor, Error, Extract, Result, Span};
+use crate::{cursor::ChildCursor, Error, Extract, Result, Span, WithSpan};
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -31,5 +31,11 @@ impl<'a, T: From<Self>> Extract<'a, T> for Ident<'a> {
             .ok_or_else(|| Error::new(span.start, "invalid range"))?;
 
         Ok(Ident { lexeme, span }.into())
+    }
+}
+
+impl<'a> WithSpan for Ident<'a> {
+    fn span(&self) -> Span {
+        self.span
     }
 }

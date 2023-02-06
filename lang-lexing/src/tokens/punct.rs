@@ -1,4 +1,4 @@
-use crate::{cursor::ChildCursor, string_ext::StringExt, Error, Extract, Result, Span};
+use crate::{cursor::ChildCursor, string_ext::StringExt, Error, Extract, Result, Span, WithSpan};
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -38,5 +38,11 @@ impl<'a, T: From<Punct<'a>>> Extract<'a, T> for Punct<'a> {
         } else {
             Err(Error::new(span, "punctuation"))
         }
+    }
+}
+
+impl<'a> WithSpan for Punct<'a> {
+    fn span(&self) -> Span {
+        self.span
     }
 }
