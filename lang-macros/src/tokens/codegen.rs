@@ -77,6 +77,12 @@ fn create_tokens(crate_name: &Ident, input: &Tokens) -> TokenStream {
                         })
                 }
             }
+
+            impl #crate_name::lexing::WithSpan for #name {
+                fn span(&self) -> #crate_name::lexing::Span {
+                    self.span
+                }
+            }
         )
     });
 
