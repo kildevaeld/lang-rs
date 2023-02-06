@@ -18,6 +18,18 @@ where
     }
 }
 
+impl<T> WithSpan for Option<T>
+where
+    T: WithSpan,
+{
+    fn span(&self) -> Span {
+        match self {
+            Some(s) => s.span(),
+            None => Span::new(0, 0),
+        }
+    }
+}
+
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Span {
