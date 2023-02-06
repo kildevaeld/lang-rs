@@ -58,6 +58,9 @@ impl fmt::Display for Span {
 impl core::ops::Add for Span {
     type Output = Span;
     fn add(mut self, rhs: Self) -> Self::Output {
+        if !rhs.is_valid() {
+            return self;
+        }
         if rhs.start < self.start {
             self.start = rhs.start;
         }
