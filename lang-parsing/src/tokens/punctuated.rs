@@ -46,25 +46,52 @@ impl<T, P> Punctuated<T, P> {
 
         Ok(Punctuated { items })
     }
+
+    pub fn iter(&self) -> PunctuatedIter<'_, T, P> {
+        PunctuatedIter {
+            iter: self.items.iter(),
+        }
+    }
 }
 
 impl<T, P> IntoIterator for Punctuated<T, P> {
     type Item = T;
-    type IntoIter = PunctuatedIter<T, P>;
+    type IntoIter = PunctuatedIntoIter<T, P>;
 
     fn into_iter(self) -> Self::IntoIter {
-        PunctuatedIter {
+        PunctuatedIntoIter {
             iter: self.items.into_iter(),
         }
     }
 }
 
-pub struct PunctuatedIter<T, P> {
+pub struct PunctuatedIntoIter<T, P> {
     iter: alloc::vec::IntoIter<Entry<T, P>>,
 }
 
-impl<T, P> Iterator for PunctuatedIter<T, P> {
+impl<T, P> Iterator for PunctuatedIntoIter<T, P> {
     type Item = T;
+    fn next(&mut self) -> Option<Self::Item> {
+        loop {
+            let next = match self.iter.next() {
+                Some(next) => next,
+                None => return None,
+            };
+
+            match next {
+                Entry::Item(item) => return Some(item),
+                Entry::Punct(_) => {}
+            }
+        }
+    }
+}
+
+pub struct PunctuatedIter<'a, T, P> {
+    iter: core::slice::Iter<'a, Entry<T, P>>,
+}
+
+impl<'a, T, P> Iterator for PunctuatedIter<'a, T, P> {
+    type Item = &'a T;
     fn next(&mut self) -> Option<Self::Item> {
         loop {
             let next = match self.iter.next() {
