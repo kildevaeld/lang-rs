@@ -12,7 +12,7 @@ impl ParseToken {
                 let i = any.iter().map(|i| {
                     //
 
-                    quote!(input.peek(#i))
+                    quote!(input.peek::<#i>())
                 });
 
                 quote!(
@@ -20,7 +20,7 @@ impl ParseToken {
                 )
             }
             ParseToken::Operator(lit) => {
-                quote!(input.peek(#lit))
+                quote!(input.peek::<#lit>())
             }
             ParseToken::Ident(ident) => {
                 quote!(input.clone().parse::<#ident>().is_ok())
@@ -80,7 +80,7 @@ fn peek_token(token: &ParseToken) -> TokenStream {
 
     quote!(
         #(
-            input.peek(#tokens)
+            input.peek::<#tokens>()
         )||*
     )
 }

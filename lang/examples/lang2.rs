@@ -99,7 +99,7 @@ lang::precedence!(
     }) }
     --
     {
-        if input.peek(PeekIdent) {
+        if input.peek::<Ident>() {
             Ok(Expr::Ident(input.parse::<Ident>()?.lexeme.to_string()))
         } else {
             Ok(Expr::Literal(input.parse::<Literal>()?.lexeme.to_string()))
