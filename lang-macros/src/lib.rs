@@ -1,5 +1,6 @@
 // mod ast;
 mod derive;
+#[cfg(feature = "opcodes")]
 mod opcodes;
 mod pratt;
 mod tokens;
@@ -18,6 +19,7 @@ pub fn precedence(input: TokenStream) -> TokenStream {
     pratt::run(input.into()).into()
 }
 
+#[cfg(feature = "opcodes")]
 #[proc_macro]
 pub fn opcodes(input: TokenStream) -> TokenStream {
     opcodes::run(input)

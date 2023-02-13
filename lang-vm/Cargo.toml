@@ -13,6 +13,6 @@ trace = ["std"]
 
 [dependencies]
 gc-arena = { git = "https://github.com/kildevaeld/gc-arena", default-features = false, features = ["hashbrown"]}
-lang-macros = { path = "../lang-macros"}
+lang-macros = { path = "../lang-macros", features = ["opcodes"]}
 byteorder = { version = "1", default-features = false }
 hashbrown = { version = "0.13"}

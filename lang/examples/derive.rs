@@ -34,7 +34,7 @@ pub enum TestEnum<'a> {
 }
 
 fn main() {
-    let input = "test = 2020";
+    let input = "fn test";
 
     let lexer = Token::create_lexer(input).skip_whitespace(true);
 
