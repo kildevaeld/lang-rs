@@ -8,7 +8,7 @@ fn main() {
 
     let mut parse = Parser::<Token>::from_tokens(input, lexer.tokenize()).expect("parser");
 
-    // if parse.peek(Literal) {}
+    if parse.peek::<Literal>() {}
 
     let ident = parse.parse::<(Ident, Ident, Punct, Punct, Punct, (Literal, Literal))>();
 

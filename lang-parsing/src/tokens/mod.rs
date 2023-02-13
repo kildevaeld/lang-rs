@@ -1,6 +1,6 @@
 mod punctuated;
 
-use crate::{Cursor, Error, Parse, Token, TokenReader};
+use crate::{Cursor, Error, Parse, Peek, TokenReader};
 use lang_lexing::{
     tokens::{Comment, Ident, Literal, Punct, Whitespace},
     Span, TokenRef, WithSpan,
@@ -23,7 +23,7 @@ macro_rules! lex {
     };
 }
 
-impl<'a, T> Token<'a, T> for Ident<'a>
+impl<'a, T> Peek<'a, T> for Ident<'a>
 where
     T: TokenRef<Self>,
 {
@@ -40,7 +40,7 @@ pub fn Ident<'a>(_span: Span) -> Ident<'a> {
     panic!()
 }
 
-impl<'a, T> Token<'a, T> for Literal<'a>
+impl<'a, T> Peek<'a, T> for Literal<'a>
 where
     T: TokenRef<Self>,
 {
@@ -57,7 +57,7 @@ pub fn Literal<'a>(_span: Span) -> Literal<'a> {
     panic!()
 }
 
-impl<'a, T> Token<'a, T> for Whitespace<'a>
+impl<'a, T> Peek<'a, T> for Whitespace<'a>
 where
     T: TokenRef<Self>,
 {
@@ -74,7 +74,7 @@ pub fn Whitespace<'a>(_span: Span) -> Whitespace<'a> {
     panic!()
 }
 
-impl<'a, T> Token<'a, T> for Comment<'a>
+impl<'a, T> Peek<'a, T> for Comment<'a>
 where
     T: TokenRef<Self>,
 {

@@ -66,15 +66,15 @@ impl<'a, T> Parser<'a, T> {
         }
     }
 
-    pub fn peek<P: Peek<'a, T>>(&mut self, token: P) -> bool {
-        self.reader().peek(token)
+    pub fn peek<P: Peek<'a, T>>(&mut self) -> bool {
+        self.reader().peek::<P>()
     }
 
-    pub fn peek2<P: Peek<'a, T>>(&mut self, token: P) -> bool {
-        self.reader().peek2(token)
+    pub fn peek2<P: Peek<'a, T>>(&mut self) -> bool {
+        self.reader().peek2::<P>()
     }
 
-    pub fn peek3<P: Peek<'a, T>>(&mut self, token: P) -> bool {
-        self.reader().peek_offset(token, 2)
+    pub fn peek3<P: Peek<'a, T>>(&mut self) -> bool {
+        self.reader().peek_offset::<P>(2)
     }
 }

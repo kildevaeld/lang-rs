@@ -1,9 +1,4 @@
-use super::{
-    cursor::Cursor,
-    error::Error,
-    parse::Parse,
-    token::{Peek, Token},
-};
+use super::{cursor::Cursor, error::Error, parse::Parse, token::Peek};
 use alloc::borrow::Cow;
 use alloc::vec::Vec;
 use lang_lexing::WithSpan;
@@ -37,22 +32,21 @@ impl<'a, 'b, T> TokenReader<'a, 'b, T> {
         self.child(P::parse)
     }
 
-    pub fn peek<P: Peek<'a, T>>(&self, token: P) -> bool {
-        self.peek_offset(token, 0)
+    pub fn peek<P: Peek<'a, T>>(&self) -> bool {
+        self.peek_offset::<P>(0)
     }
 
-    pub fn peek2<P: Peek<'a, T>>(&self, token: P) -> bool {
-        self.peek_offset(token, 1)
+    pub fn peek2<P: Peek<'a, T>>(&self) -> bool {
+        self.peek_offset::<P>(1)
     }
 
-    pub fn peek_offset<P: Peek<'a, T>>(&self, token: P, offset: usize) -> bool {
-        let _ = token;
+    pub fn peek_offset<P: Peek<'a, T>>(&self, offset: usize) -> bool {
         let mut cursor = Cursor {
             input: self.input,
             tokens: self.tokens,
             current: self.current + offset,
         };
-        P::Token::peek(&mut cursor)
+        P::peek(&mut cursor)
     }
 
     pub fn eat<P>(&mut self) -> Result<(), Error>
