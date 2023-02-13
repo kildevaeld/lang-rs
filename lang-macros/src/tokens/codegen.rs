@@ -49,12 +49,7 @@ fn create_tokens(crate_name: &Ident, input: &Tokens) -> TokenStream {
                 pub span: #crate_name::lexing::Span
             }
 
-            #[allow(non_snake_case)]
-            pub fn #name(_span: #crate_name::lexing::Span) -> #name {
-                panic!()
-            }
-
-            impl<'input, T> #crate_name::parsing::Token<'input, T> for #name
+            impl<'input, T> #crate_name::parsing::Peek<'input, T> for #name
             where
                 T: #crate_name::lexing::TokenRef<#constraint>,
                 T: #crate_name::lexing::WithSpan,
@@ -72,9 +67,9 @@ fn create_tokens(crate_name: &Ident, input: &Tokens) -> TokenStream {
             {
                 fn parse(input: &mut #crate_name::parsing::TokenReader<'input, '_, T>) -> Result<Self, #crate_name::parsing::Error> {
                     let span = #parse;
-                        Ok(#name {
-                            span
-                        })
+                    Ok(#name {
+                        span
+                    })
                 }
             }
 
