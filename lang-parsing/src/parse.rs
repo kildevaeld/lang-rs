@@ -1,4 +1,4 @@
-use super::{error::Error, reader::TokenReader};
+use super::{cursor::Cursor, error::Error, reader::TokenReader, Peek};
 
 pub trait Parse<'a, T>: Sized {
     /// Parse self from a token reader
@@ -8,6 +8,13 @@ pub trait Parse<'a, T>: Sized {
 
 macro_rules! parse_impl {
     ($first: ident) => {
+
+        impl<'a, T, $first: Peek<'a, T>> Peek<'a, T> for ($first, ) {
+            fn peek(cursor: &mut Cursor<'a, '_, T>) -> bool {
+                $first::peek(cursor)
+            }
+        }
+
         impl<'a, T, $first: Parse<'a, T>> Parse<'a, T> for ($first,) {
             fn parse(state: &mut TokenReader<'a, '_, T>) -> Result<($first,), Error> {
                 Ok((
@@ -18,6 +25,12 @@ macro_rules! parse_impl {
     };
     ($first: ident $($rest:ident)*) => {
         parse_impl!($($rest)*);
+
+        impl<'a, T, $first: Peek<'a, T>, $($rest),*> Peek<'a, T> for ($first, $($rest),*) {
+            fn peek(cursor: &mut Cursor<'a, '_, T>) -> bool {
+                $first::peek(cursor)
+            }
+        }
 
         impl<'a, T, $first: Parse<'a, T>, $($rest: Parse<'a, T>),*> Parse<'a, T> for ($first, $($rest),*) {
 
@@ -45,12 +58,21 @@ where
     }
 }
 
+impl<'a, T, TOKEN> Peek<'a, TOKEN> for Option<T>
+where
+    T: Peek<'a, TOKEN>,
+{
+    fn peek(cursor: &mut Cursor<'a, '_, TOKEN>) -> bool {
+        T::peek(cursor)
+    }
+}
+
 #[cfg(feature = "either")]
 impl<'a, T, L, R> Parse<'a, T> for either::Either<L, R>
 where
     L: Parse<'a, T>,
     R: Parse<'a, T>,
-    T: WithSpan,
+    T: lang_lexing::WithSpan,
 {
     #[allow(non_snake_case)]
     fn parse(state: &mut TokenReader<'a, '_, T>) -> Result<Self, Error> {
@@ -60,5 +82,17 @@ where
             L => l { Either::Left(l) },
             R => r { Either::Right(r) }
         )
+    }
+}
+
+#[cfg(feature = "either")]
+impl<'a, T, L, R> Peek<'a, T> for either::Either<L, R>
+where
+    L: Peek<'a, T>,
+    R: Peek<'a, T>,
+    T: lang_lexing::WithSpan,
+{
+    fn peek(cursor: &mut Cursor<'a, '_, T>) -> bool {
+        L::peek(cursor) || R::peek(cursor)
     }
 }
