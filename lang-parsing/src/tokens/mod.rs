@@ -1,12 +1,11 @@
 mod punctuated;
 
-pub use punctuated::*;
-
 use crate::{Cursor, Error, Parse, Token, TokenReader};
 use lang_lexing::{
-    tokens::{Ident, Literal, Punct},
+    tokens::{Comment, Ident, Literal, Punct, Whitespace},
     Span, TokenRef, WithSpan,
 };
+pub use punctuated::*;
 use unicode_segmentation::UnicodeSegmentation;
 
 macro_rules! lex {
@@ -58,7 +57,41 @@ pub fn Literal<'a>(_span: Span) -> Literal<'a> {
     panic!()
 }
 
-lex!(Ident, Punct, Literal);
+impl<'a, T> Token<'a, T> for Whitespace<'a>
+where
+    T: TokenRef<Self>,
+{
+    fn peek(cursor: &mut Cursor<'a, '_, T>) -> bool {
+        match cursor.current() {
+            None => false,
+            Some(current) => current.value().is_some(),
+        }
+    }
+}
+
+#[allow(non_snake_case)]
+pub fn Whitespace<'a>(_span: Span) -> Whitespace<'a> {
+    panic!()
+}
+
+impl<'a, T> Token<'a, T> for Comment<'a>
+where
+    T: TokenRef<Self>,
+{
+    fn peek(cursor: &mut Cursor<'a, '_, T>) -> bool {
+        match cursor.current() {
+            None => false,
+            Some(current) => current.value().is_some(),
+        }
+    }
+}
+
+#[allow(non_snake_case)]
+pub fn Comment<'a>(_span: Span) -> Comment<'a> {
+    panic!()
+}
+
+lex!(Ident, Punct, Literal, Whitespace, Comment);
 
 pub fn keyword<'a, T>(
     reader: &mut TokenReader<'a, '_, T>,

@@ -1,6 +1,5 @@
 use alloc::borrow::Cow;
 use core::fmt;
-
 use lang_lexing::Span;
 
 #[derive(Debug)]

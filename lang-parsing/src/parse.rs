@@ -1,5 +1,3 @@
-use lang_lexing::WithSpan;
-
 use super::{error::Error, reader::TokenReader};
 
 pub trait Parse<'a, T>: Sized {
