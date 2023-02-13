@@ -1,4 +1,5 @@
 // mod ast;
+mod derive;
 mod opcodes;
 mod pratt;
 mod tokens;
@@ -20,6 +21,11 @@ pub fn precedence(input: TokenStream) -> TokenStream {
 #[proc_macro]
 pub fn opcodes(input: TokenStream) -> TokenStream {
     opcodes::run(input)
+}
+
+#[proc_macro_derive(Parse, attributes(parse))]
+pub fn tlborm_derive(item: TokenStream) -> TokenStream {
+    derive::run(item)
 }
 
 // #[proc_macro]
