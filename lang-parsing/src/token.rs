@@ -1,5 +1,3 @@
-use lang_lexing::Span;
-
 use super::cursor::Cursor;
 
 // pub trait Peek<'a, T> {
