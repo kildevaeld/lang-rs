@@ -1,6 +1,6 @@
 use lang::{
     lexing::tokens::{Ident, Literal, LiteralNumber, LiteralString, Punct, Token},
-    parsing::{Error, Ident as PeekIdent, Parse, ParseState, Punctuated, TokenReader},
+    parsing::{Error, Ident as PeekIdent, Parse, Parser, Punctuated, TokenReader},
 };
 
 #[derive(Debug)]
@@ -117,7 +117,7 @@ fn main() {
     )
     .skip_whitespace(true);
 
-    let mut parser = ParseState::from_tokens(lexer.input(), lexer.tokenize()).expect("tokenize");
+    let mut parser = Parser::from_tokens(lexer.input(), lexer.tokenize()).expect("tokenize");
 
     let out = parser.parse::<(Token![let], Ident, Token![=], Expr)>();
 

@@ -3,30 +3,30 @@ use alloc::vec::Vec;
 
 use lang_lexing::{Error as LexerError, LexerFactory};
 
-pub struct ParseState<'a, T> {
+pub struct Parser<'a, T> {
     input: &'a str,
     stream: Vec<T>,
     current: usize,
 }
 
-impl<'a, T> ParseState<'a, T> {
-    pub fn new(input: &'a str) -> Result<ParseState<'a, T>, LexerError<'a>>
+impl<'a, T> Parser<'a, T> {
+    pub fn new(input: &'a str) -> Result<Parser<'a, T>, LexerError<'a>>
     where
         T: LexerFactory<'a, T>,
     {
         let lexer = T::create_lexer(input);
         let stream = lexer.tokenize();
 
-        ParseState::from_tokens(input, stream)
+        Parser::from_tokens(input, stream)
     }
 
-    pub fn from_tokens<I>(input: &'a str, iter: I) -> Result<ParseState<'a, T>, LexerError>
+    pub fn from_tokens<I>(input: &'a str, iter: I) -> Result<Parser<'a, T>, LexerError>
     where
         I: Iterator<Item = Result<T, LexerError<'a>>>,
     {
         let tokens = iter.collect::<Result<_, _>>()?;
 
-        let state = ParseState {
+        let state = Parser {
             input,
             stream: tokens,
             current: 0,
