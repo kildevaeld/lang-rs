@@ -25,6 +25,14 @@ impl<'a, 'b, T> Cursor<'a, 'b, T> {
         self.tokens.get(self.current)
     }
 
+    pub fn slice(&self) -> Option<&'a str>
+    where
+        T: WithSpan,
+    {
+        self.current()
+            .and_then(|current| current.span().slice(self.input))
+    }
+
     pub fn input(&self) -> &'a str {
         self.input
     }

@@ -51,12 +51,12 @@ macro_rules! extract {
                 )*
 
                 let errors = alloc::vec![
-                    $first.message,
-                    $($rest.message),*
+                    $first.kind,
+                    $($rest.kind),*
                 ];
 
 
-                Err(Error::new(position,alloc::format!("expected one of: {}", errors.join(","))))
+                Err(Error::new(position, errors))
             }
         }
     }

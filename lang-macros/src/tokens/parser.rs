@@ -62,7 +62,9 @@ pub struct Tokens {
 }
 
 pub fn parse(input: ParseStream) -> syn::Result<Tokens> {
-    let name = input.parse::<Ident>()?;
+    let name = input
+        .parse::<Ident>()
+        .map_err(|_| input.error("should start with name of Token"))?;
     let mut module_path = None;
     let mut puncts = None;
     let mut keywords = None;
@@ -88,8 +90,7 @@ pub fn parse(input: ParseStream) -> syn::Result<Tokens> {
         let name_string = name.to_string();
 
         match name_string.as_str() {
-            "punct" | "puncts" | "punctionation" | "Punct" => {
-                //
+            "punct" | "puncts" | "punctuation" | "Punct" => {
                 puncts = Some(input.parse::<PairGroup>()?);
             }
             "keywords" | "keyword" | "Keyword" => {

@@ -15,7 +15,7 @@ const NUMBER: &str = r#"
 "#;
 
 const IDENT: &str = r#"
-test _test TeSds 😀sds
+test _test TeSds  😀sds
 "#;
 
 fn main() {

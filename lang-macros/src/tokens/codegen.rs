@@ -101,7 +101,6 @@ fn create_tokens(crate_name: &Ident, input: &Tokens) -> TokenStream {
 
         let lit = &lit[1..lit.len() - 1];
 
-        //println!("lit {}", pair.token.token().to_string());
 
         let token = match lit {
             "(" | ")" | "[" | "]" | "{" | "}" => {

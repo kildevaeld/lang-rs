@@ -49,18 +49,6 @@ impl<'a> State<'a> {
     fn try_get(&self, idx: usize) -> Option<(usize, &'a str)> {
         self.buffer.get(idx).copied()
     }
-
-    // fn is_finished(&self) -> bool {
-    //     self.iter.is_none()
-    // }
-
-    // fn len(&mut self) -> usize {
-    //     while let Some(next) = self.inner_next() {
-    //         let _ = next;
-    //     }
-
-    //     self.buffer.len()
-    // }
 }
 
 struct StateReader<'a, 'b> {

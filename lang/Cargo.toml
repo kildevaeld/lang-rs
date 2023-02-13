@@ -33,3 +33,10 @@ required-features = ["macros"]
 path = "examples/ast.rs"
 name = "ast"
 required-features = ["macros"]
+
+
+
+[[example]]
+path = "examples/tokens.rs"
+name = "tokens"
+required-features = ["macros"]
