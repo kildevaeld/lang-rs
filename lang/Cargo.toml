@@ -8,7 +8,7 @@ edition = "2021"
 [features]
 default = [ ]
 macros = ["lang-macros"]
-# std = ["lang-lexing/std", "lang-parsing/std"]
+std = ["lang-lexing/std", "lang-parsing/std"]
 serde = ["lang-lexing/serde"]
 
 [dependencies]

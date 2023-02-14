@@ -10,6 +10,8 @@ default = []
 tokens = []
 serde = ["dep:serde"]
 either = ["dep:either"]
+std = []
+
 
 [dependencies]
 unicode-segmentation = { version = "1" }

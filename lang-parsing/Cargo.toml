@@ -9,6 +9,8 @@ edition = "2021"
 default = ["either"]
 tokens = ["lang-lexing/tokens", "unicode-segmentation"]
 either = ["dep:either", "lang-lexing/either"]
+std = []
+
 
 [dependencies]
 lang-lexing = { path = "../lang-lexing"}
