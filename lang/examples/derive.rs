@@ -30,7 +30,7 @@ pub enum TestEnum<'a> {
         fn_token: Token![fn],
         ident: Ident<'a>,
     },
-    Test(Test<'a>),
+    Test(Box<Test<'a>>),
 }
 
 fn main() {

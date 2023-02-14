@@ -1,8 +1,8 @@
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::{format_ident, quote};
 use syn::{
-    Data, DataEnum, DataStruct, DeriveInput, Field, Fields, Generics, ImplGenerics, Path, Type,
-    TypeGenerics, WhereClause,
+    Data, DataEnum, DataStruct, DeriveInput, Field, Fields, GenericArgument, Generics,
+    ImplGenerics, Path, PathArguments, Type, TypeGenerics, TypePath, WhereClause,
 };
 
 use crate::utils::lang_parsing;
@@ -30,9 +30,27 @@ fn path_ident(path: &Path) -> Option<TokenStream> {
     }
 }
 
+fn nullify_lifetimes(ty: &mut TypePath) {
+    ty.path.segments.iter_mut().for_each(|segment| {
+        if let PathArguments::AngleBracketed(bargs) = &mut segment.arguments {
+            for arg in &mut bargs.args {
+                match arg {
+                    GenericArgument::Type(Type::Path(ty)) => nullify_lifetimes(ty),
+                    GenericArgument::Lifetime(lifetime) => lifetime.ident = format_ident!("_"),
+                    _ => return,
+                }
+            }
+        }
+    })
+}
+
 fn path_type(ty: &Type) -> Option<TokenStream> {
     match ty {
-        Type::Path(p) => path_ident(&p.path),
+        Type::Path(p) => {
+            let mut clone = p.clone();
+            nullify_lifetimes(&mut clone);
+            Some(quote!(#clone))
+        }
         Type::Macro(m) => Some(quote!(#m)),
         _ => None,
     }
@@ -103,9 +121,11 @@ fn fields_peek(fields: &Fields, cursor: bool) -> syn::Result<TokenStream> {
 
         let ident = path_type(&fields.first().unwrap().ty);
         ident
+        // &fields.first().unwrap().ty
     };
 
     let peek = if cursor {
+        //quote!(<#ident>::peek(cursor))
         quote!(<#ident as lang::parsing::Peek<'parse, lang::lexing::tokens::Token<'parse>>>::peek(cursor))
     } else {
         quote!(state.peek::<#ident>())
@@ -197,6 +217,7 @@ fn create_struct(name: Ident, generics: Generics, data: DataStruct) -> syn::Resu
 
         impl #generics_impl #crate_name::parsing::Peek<'parse, #crate_name::lexing::tokens::Token<'parse>> for #name #ty_gen #where_clause {
             fn peek(cursor: &mut #crate_name::parsing::Cursor<'parse, '_,  #crate_name::lexing::tokens::Token<'parse>>) -> bool {
+                use #crate_name::parsing::Peek;
                 #peek
             }
         }
@@ -315,6 +336,7 @@ fn create_enum(name: Ident, generics: Generics, data: DataEnum) -> syn::Result<T
 
         impl #generics_impl #crate_name::parsing::Peek<'parse, #crate_name::lexing::tokens::Token<'parse>> for #name #ty_gen #where_clause {
             fn peek(cursor: &mut #crate_name::parsing::Cursor<'parse, '_,  #crate_name::lexing::tokens::Token<'parse>>) -> bool {
+                use #crate_name::parsing::Peek;
                 #(#peeks)||*
             }
         }

@@ -1,3 +1,5 @@
+use alloc::boxed::Box;
+
 use super::{cursor::Cursor, error::Error, reader::TokenReader, Peek};
 
 pub trait Parse<'a, T>: Sized {
@@ -94,5 +96,23 @@ where
 {
     fn peek(cursor: &mut Cursor<'a, '_, T>) -> bool {
         L::peek(cursor) || R::peek(cursor)
+    }
+}
+
+impl<'a, T, TOKEN> Parse<'a, TOKEN> for Box<T>
+where
+    T: Parse<'a, TOKEN>,
+{
+    fn parse(state: &mut TokenReader<'a, '_, TOKEN>) -> Result<Self, Error> {
+        Ok(Box::new(T::parse(state)?))
+    }
+}
+
+impl<'a, T, TOKEN> Peek<'a, TOKEN> for Box<T>
+where
+    T: Peek<'a, TOKEN>,
+{
+    fn peek(cursor: &mut Cursor<'a, '_, TOKEN>) -> bool {
+        T::peek(cursor)
     }
 }
