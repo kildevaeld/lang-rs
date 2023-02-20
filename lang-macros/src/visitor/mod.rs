@@ -109,7 +109,7 @@ pub fn run(_attr: TokenStream, item: TokenStream) -> TokenStream {
         }
 
         impl #generics_impl #name #generics_type #where_clause {
-            fn accept<V: #visitor_name #generics_type>(&mut self, visitor: &mut V) -> V::Output {
+            pub fn accept<V: #visitor_name #generics_type>(&mut self, visitor: &mut V) -> V::Output {
                 match self {
                     #(#accept),*
                 }
