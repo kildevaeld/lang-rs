@@ -6,11 +6,11 @@ use lang_lexing::Span;
 pub enum ErrorKind {
     Expected {
         message: Cow<'static, str>,
-        rule: Cow<'static, str>,
+        rule: Option<Cow<'static, str>>,
     },
     OneOf {
         errors: Vec<ErrorKind>,
-        rule: Cow<'static, str>,
+        rule: Option<Cow<'static, str>>,
     },
 }
 
@@ -37,7 +37,7 @@ impl From<(&'static str, &'static str)> for ErrorKind {
     fn from(value: (&'static str, &'static str)) -> Self {
         ErrorKind::Expected {
             message: value.1.into(),
-            rule: value.0.into(),
+            rule: Some(value.0.into()),
         }
     }
 }
@@ -46,7 +46,7 @@ impl From<&'static str> for ErrorKind {
     fn from(value: &'static str) -> Self {
         ErrorKind::Expected {
             message: value.into(),
-            rule: value.into(),
+            rule: None,
         }
     }
 }
@@ -55,7 +55,16 @@ impl From<(String, String)> for ErrorKind {
     fn from(value: (String, String)) -> Self {
         ErrorKind::Expected {
             message: value.1.into(),
-            rule: value.0.into(),
+            rule: None,
+        }
+    }
+}
+
+impl From<String> for ErrorKind {
+    fn from(value: String) -> Self {
+        ErrorKind::Expected {
+            message: value.into(),
+            rule: None,
         }
     }
 }
@@ -67,7 +76,7 @@ where
     fn from(errors: (S, Vec<ErrorKind>)) -> Self {
         ErrorKind::OneOf {
             errors: errors.1,
-            rule: errors.0.into(),
+            rule: Some(errors.0.into()),
         }
     }
 }
