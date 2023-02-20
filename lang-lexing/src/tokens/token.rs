@@ -1,6 +1,16 @@
 use super::{whitespace::Whitespace, Comment, Ident, Literal, LiteralNumber, LiteralString, Punct};
 use crate::{Lexer, LexerFactory, Span, TokenRef, WithSpan};
 
+bitflags::bitflags! {
+    pub struct FilterMask: u8 {
+        const PUNCT = 1 << 0;
+        const IDENT = 1 << 1;
+        const LITERAL = 1 << 2;
+        const WHITESPACE = 1 << 3;
+        const COMMENT = 1 << 4;
+    }
+}
+
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Token<'a> {
@@ -9,6 +19,18 @@ pub enum Token<'a> {
     Literal(Literal<'a>),
     Whitespace(Whitespace<'a>),
     Comment(Comment<'a>),
+}
+
+impl<'a> Token<'a> {
+    pub fn filter_mask(&self) -> FilterMask {
+        match self {
+            Token::Comment(_) => FilterMask::COMMENT,
+            Token::Ident(_) => FilterMask::IDENT,
+            Token::Literal(_) => FilterMask::LITERAL,
+            Token::Punct(_) => FilterMask::PUNCT,
+            Token::Whitespace(_) => FilterMask::WHITESPACE,
+        }
+    }
 }
 
 impl<'a> LexerFactory<'a, Token<'a>> for Token<'a> {

@@ -276,7 +276,7 @@ pub fn run(input: Input) -> TokenStream {
         #[allow(unused_braces, non_snake_case)]
         pub mod #module {
             use super::*;
-            use #crate_name::{parsing::{Parse, TokenReader, Error}, lexing::tokens::Token};
+            use #crate_name::{parsing::{Parse, Peek, TokenReader, Cursor, Error}, lexing::{tokens::Token, WithSpan, Span}};
 
             fn __primary<'input>(input: &mut TokenReader<'input, '_, Token<'input>>) -> Result<#return_type, Error> #primary
 
@@ -312,6 +312,19 @@ pub fn run(input: Input) -> TokenStream {
                     parser(input)
                 }
             }
+
+            // impl<'input> Peek<'input, Token<'input>> for #return_type {
+            //     fn peek(input: &mut Cursor<'input, '_, Token<'input>>) -> bool {
+            //         todo!("precedence peek")
+            //     }
+            // }
+
+            // impl<'input> WithSpan for #return_type {
+            //     fn span(&self) -> Span {
+            //         todo!("precedence with span")
+            //     }
+            // }
+
 
         }
 

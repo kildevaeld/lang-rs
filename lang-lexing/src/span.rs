@@ -30,6 +30,24 @@ where
     }
 }
 
+impl<T> WithSpan for alloc::vec::Vec<T>
+where
+    T: WithSpan,
+{
+    fn span(&self) -> Span {
+        if self.is_empty() {
+            Span::default()
+        } else {
+            let (first, last) = match (self.first(), self.last()) {
+                (Some(first), Some(last)) => (first.span(), last.span()),
+                _ => return Span::default(),
+            };
+
+            first + last
+        }
+    }
+}
+
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Span {

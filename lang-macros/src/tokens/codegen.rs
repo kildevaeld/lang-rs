@@ -4,7 +4,7 @@ use quote::quote;
 
 use super::parser::{Tokens, TypeList, Pair};
 
-fn extract(tokens: &Tokens) -> TokenStream {
+fn extract(crate_name: &Ident, tokens: &Tokens) -> TokenStream {
     let literals = tokens
         .literals
         .clone()
@@ -16,7 +16,7 @@ fn extract(tokens: &Tokens) -> TokenStream {
         .map(|ty| quote!(#ty));
 
     quote!(
-        (#(#literals),*, Punct<'input>, Ident<'input>)
+        (#(#literals),*, #crate_name::lexing::tokens::Punct<'input>, #crate_name::lexing::tokens::Ident<'input>)
     )
 }
 
@@ -150,7 +150,7 @@ fn create_tokens(crate_name: &Ident, input: &Tokens) -> TokenStream {
 pub fn create(tokens: Tokens) -> TokenStream {
     let crate_name = lang_parsing();
 
-    let extracts = extract(&tokens);
+    let extracts = extract(&crate_name,&tokens);
 
     let tokens = create_tokens(&crate_name, &tokens);
 

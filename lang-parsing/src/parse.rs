@@ -1,11 +1,23 @@
 use alloc::boxed::Box;
 
+use crate::{ErrorKind, Parser};
+
 use super::{cursor::Cursor, error::Error, reader::TokenReader, Peek};
 
 pub trait Parse<'a, T>: Sized {
     /// Parse self from a token reader
     /// if this fails, the reader can be in an invalid state
     fn parse(state: &mut TokenReader<'a, '_, T>) -> Result<Self, Error>;
+}
+
+pub trait Rule {
+    type Parse<'a, T>: Parse<'a, T>
+    where
+        Self: 'a;
+
+    const NAME: &'static str;
+
+    fn expected() -> ErrorKind;
 }
 
 macro_rules! parse_impl {
@@ -114,5 +126,33 @@ where
 {
     fn peek(cursor: &mut Cursor<'a, '_, TOKEN>) -> bool {
         T::peek(cursor)
+    }
+}
+
+impl<'a, T, TOKEN> Peek<'a, TOKEN> for alloc::vec::Vec<T>
+where
+    T: Peek<'a, TOKEN>,
+{
+    fn peek(cursor: &mut Cursor<'a, '_, TOKEN>) -> bool {
+        T::peek(cursor)
+    }
+}
+
+impl<'a, T, TOKEN> Parse<'a, TOKEN> for alloc::vec::Vec<T>
+where
+    T: Parse<'a, TOKEN> + Peek<'a, TOKEN>,
+{
+    fn parse(state: &mut TokenReader<'a, '_, TOKEN>) -> Result<Self, Error> {
+        let mut output = alloc::vec::Vec::new();
+
+        loop {
+            if !state.peek::<T>() {
+                break;
+            }
+
+            output.push(state.parse()?);
+        }
+
+        Ok(output)
     }
 }

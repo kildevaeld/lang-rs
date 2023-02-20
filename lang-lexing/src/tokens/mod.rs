@@ -2,6 +2,7 @@ mod ident;
 mod literal;
 // mod literal_bool;
 mod comment;
+mod filter;
 mod literal_number;
 mod literal_string;
 mod punct;

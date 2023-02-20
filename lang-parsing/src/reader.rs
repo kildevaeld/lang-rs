@@ -1,5 +1,5 @@
-use super::{cursor::Cursor, error::Error, parse::Parse, token::Peek};
-use alloc::borrow::Cow;
+use super::{cursor::Cursor, error::Error, parse::Parse, peek::Peek};
+use crate::ErrorKind;
 use alloc::vec::Vec;
 use lang_lexing::WithSpan;
 
@@ -94,7 +94,7 @@ impl<'a, 'b, T> TokenReader<'a, 'b, T> {
         }
     }
 
-    pub fn error(&self, error: impl Into<Cow<'static, str>>) -> Error
+    pub fn error(&self, error: impl Into<ErrorKind>) -> Error
     where
         T: WithSpan,
     {

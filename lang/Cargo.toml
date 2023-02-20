@@ -44,3 +44,8 @@ required-features = ["macros"]
 path = "examples/derive.rs"
 name = "derive"
 required-features = ["macros"]
+
+[[example]]
+path = "examples/toybox/main.rs"
+name = "toybox"
+required-features = ["macros"]

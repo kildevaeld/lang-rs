@@ -5,6 +5,7 @@ mod opcodes;
 mod pratt;
 mod tokens;
 mod utils;
+mod visitor;
 
 use proc_macro::TokenStream;
 
@@ -26,11 +27,21 @@ pub fn opcodes(input: TokenStream) -> TokenStream {
 }
 
 #[proc_macro_derive(Parse, attributes(parse))]
-pub fn tlborm_derive(item: TokenStream) -> TokenStream {
+pub fn parse_derive(item: TokenStream) -> TokenStream {
     derive::run(item)
 }
 
-// #[proc_macro]
-// pub fn ast(input: TokenStream) -> TokenStream {
-//     ast::run(input)
-// }
+#[proc_macro_derive(Peek)]
+pub fn peek_derive(item: TokenStream) -> TokenStream {
+    derive::run_peek(item)
+}
+
+#[proc_macro_derive(WithSpan)]
+pub fn with_span_derive(item: TokenStream) -> TokenStream {
+    derive::run_span(item)
+}
+
+#[proc_macro_attribute]
+pub fn visitor(attr: TokenStream, item: TokenStream) -> TokenStream {
+    visitor::run(attr, item)
+}

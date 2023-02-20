@@ -1,3 +1,5 @@
+use crate::ErrorKind;
+
 use super::error::Error;
 use lang_lexing::{Span, TokenRef, WithSpan};
 
@@ -21,6 +23,7 @@ impl<'a, 'b, T> Clone for Cursor<'a, 'b, T> {
 }
 
 impl<'a, 'b, T> Cursor<'a, 'b, T> {
+    /// Current token T
     pub fn current(&self) -> Option<&T> {
         self.tokens.get(self.current)
     }
@@ -33,10 +36,12 @@ impl<'a, 'b, T> Cursor<'a, 'b, T> {
             .and_then(|current| current.span().slice(self.input))
     }
 
+    /// Returns a reference to the input
     pub fn input(&self) -> &'a str {
         self.input
     }
 
+    /// The span of the current token
     pub fn span(&self) -> Span
     where
         T: WithSpan,
@@ -44,6 +49,7 @@ impl<'a, 'b, T> Cursor<'a, 'b, T> {
         self.current().map(|m| m.span()).unwrap_or_default()
     }
 
+    /// Consume and return the next token
     pub fn take<I>(&mut self) -> Option<I>
     where
         T: TokenRef<I>,
@@ -52,7 +58,7 @@ impl<'a, 'b, T> Cursor<'a, 'b, T> {
         self.next(|item| item.value().cloned())
     }
 
-    pub fn error(&self, error: impl Into<Cow<'static, str>>) -> Error
+    pub fn error(&self, error: impl Into<ErrorKind>) -> Error
     where
         T: WithSpan,
     {

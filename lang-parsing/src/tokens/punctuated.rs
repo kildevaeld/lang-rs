@@ -1,4 +1,4 @@
-use crate::{Error, Parse, TokenReader};
+use crate::{Error, Parse, Peek, TokenReader};
 use alloc::vec::Vec;
 
 #[derive(Debug, Clone)]
@@ -12,41 +12,42 @@ pub struct Punctuated<T, P> {
     items: Vec<Entry<T, P>>,
 }
 
-impl<T, P> Punctuated<T, P> {
-    pub fn terminated<'a, TOKEN>(state: &mut TokenReader<'a, '_, TOKEN>) -> Result<Self, Error>
-    where
-        T: Parse<'a, TOKEN>,
-        P: Parse<'a, TOKEN>,
-    {
-        let mut items = Vec::default();
+impl<'a, T, P, TOKEN> Peek<'a, TOKEN> for Punctuated<T, P>
+where
+    T: Peek<'a, TOKEN>,
+{
+    fn peek(cursor: &mut crate::Cursor<'a, '_, TOKEN>) -> bool {
+        T::peek(cursor)
+    }
+}
+
+impl<'a, T, P, TOKEN> Parse<'a, TOKEN> for Punctuated<T, P>
+where
+    T: Peek<'a, TOKEN> + Parse<'a, TOKEN>,
+    P: Peek<'a, TOKEN> + Parse<'a, TOKEN>,
+{
+    fn parse(state: &mut TokenReader<'a, '_, TOKEN>) -> Result<Self, Error> {
+        let mut items = alloc::vec::Vec::new();
 
         loop {
-            if state.is_empty() {
+            if !state.peek::<T>() {
                 break;
             }
 
-            let item = match state.parse::<T>() {
-                Ok(ret) => ret,
-                Err(_) => break,
-            };
+            items.push(Entry::Item(state.parse()?));
 
-            items.push(Entry::Item(item));
-
-            if state.is_empty() {
+            if !state.peek::<P>() {
                 break;
             }
 
-            let punct = match state.parse::<P>() {
-                Ok(ret) => ret,
-                Err(_) => break,
-            };
-
-            items.push(Entry::Punct(punct));
+            items.push(Entry::Punct(state.parse()?));
         }
 
         Ok(Punctuated { items })
     }
+}
 
+impl<T, P> Punctuated<T, P> {
     pub fn iter(&self) -> PunctuatedIter<'_, T, P> {
         PunctuatedIter {
             iter: self.items.iter(),

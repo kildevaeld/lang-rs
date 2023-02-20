@@ -1,11 +1,13 @@
+mod group;
 mod punctuated;
 
+pub use self::{group::*, punctuated::*};
 use crate::{Cursor, Error, Parse, Peek, TokenReader};
+use alloc::string::ToString;
 use lang_lexing::{
     tokens::{Comment, Ident, Literal, Punct, Whitespace},
     Span, TokenRef, WithSpan,
 };
-pub use punctuated::*;
 use unicode_segmentation::UnicodeSegmentation;
 
 macro_rules! lex {
@@ -35,11 +37,6 @@ where
     }
 }
 
-#[allow(non_snake_case)]
-pub fn Ident<'a>(_span: Span) -> Ident<'a> {
-    panic!()
-}
-
 impl<'a, T> Peek<'a, T> for Literal<'a>
 where
     T: TokenRef<Self>,
@@ -50,11 +47,6 @@ where
             Some(current) => current.value().is_some(),
         }
     }
-}
-
-#[allow(non_snake_case)]
-pub fn Literal<'a>(_span: Span) -> Literal<'a> {
-    panic!()
 }
 
 impl<'a, T> Peek<'a, T> for Whitespace<'a>
@@ -69,11 +61,6 @@ where
     }
 }
 
-#[allow(non_snake_case)]
-pub fn Whitespace<'a>(_span: Span) -> Whitespace<'a> {
-    panic!()
-}
-
 impl<'a, T> Peek<'a, T> for Comment<'a>
 where
     T: TokenRef<Self>,
@@ -84,11 +71,6 @@ where
             Some(current) => current.value().is_some(),
         }
     }
-}
-
-#[allow(non_snake_case)]
-pub fn Comment<'a>(_span: Span) -> Comment<'a> {
-    panic!()
 }
 
 lex!(Ident, Punct, Literal, Whitespace, Comment);
@@ -107,7 +89,7 @@ where
             }
         }
 
-        Err(cursor.error(alloc::format!("keyword({keyword})")))
+        Err(cursor.error(("keyword".to_string(), keyword.to_string())))
     })
 }
 
@@ -134,10 +116,10 @@ where
     for part in token.split_word_bounds() {
         let punct = match cursor.take::<Punct<'a>>() {
             Some(punct) => punct,
-            None => return Err(cursor.error(alloc::format!("punctuation({token})"))),
+            None => return Err(cursor.error(("punctuation".to_string(), token.to_string()))),
         };
         if punct.lexeme != part {
-            return Err(cursor.error(alloc::format!("punctuation({token}")));
+            return Err(cursor.error(("punctiation".to_string(), token.to_string())));
         }
 
         if let Some(span) = span.as_mut() {

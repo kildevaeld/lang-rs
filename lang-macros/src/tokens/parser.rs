@@ -54,7 +54,7 @@ impl Parse for PairGroup {
 
 #[derive(Debug, Clone)]
 pub struct Tokens {
-    pub name: Ident,
+    // pub name: Ident,
     pub module_path: Option<Path>,
     pub puncts: PairGroup,
     pub keywords: PairGroup,
@@ -62,9 +62,9 @@ pub struct Tokens {
 }
 
 pub fn parse(input: ParseStream) -> syn::Result<Tokens> {
-    let name = input
-        .parse::<Ident>()
-        .map_err(|_| input.error("should start with name of Token"))?;
+    // let name = input
+    //     .parse::<Ident>()
+    //     .map_err(|_| input.error("should start with name of Token"))?;
     let mut module_path = None;
     let mut puncts = None;
     let mut keywords = None;
@@ -116,7 +116,7 @@ pub fn parse(input: ParseStream) -> syn::Result<Tokens> {
     let keywords = keywords.unwrap();
 
     Ok(Tokens {
-        name,
+        // name,
         module_path,
         puncts,
         keywords,

@@ -1,4 +1,4 @@
-use super::{error::Error, parse::Parse, reader::TokenReader, token::Peek};
+use super::{error::Error, parse::Parse, peek::Peek, reader::TokenReader};
 use alloc::vec::Vec;
 
 use lang_lexing::{Error as LexerError, LexerFactory};
@@ -35,7 +35,7 @@ impl<'a, T> Parser<'a, T> {
         Ok(state)
     }
 
-    pub(crate) fn reader<'b>(&'b mut self) -> TokenReader<'a, 'b, T> {
+    fn reader<'b>(&'b mut self) -> TokenReader<'a, 'b, T> {
         TokenReader {
             input: self.input,
             tokens: &self.stream,

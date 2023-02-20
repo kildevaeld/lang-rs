@@ -10,10 +10,10 @@ macro_rules! any_of {
             )*
 
             let errors = vec![
-                $($ident.message),*
+                $($ident.kind),*
             ];
 
-            Err($state.error(format!("expected one of: {}", errors.join(", "))))
+            Err($state.error(errors))
         }
     };
 
@@ -28,10 +28,10 @@ macro_rules! any_of {
             )*
 
             let errors = vec![
-                $($ident.message),*
+                $($ident.kind),*
             ];
 
-            Err($state.error(format!("expected one of: {}", errors.join(", "))))
+            Err($state.error(errors))
         }
     };
 
@@ -46,10 +46,10 @@ macro_rules! any_of {
             )*
 
             let errors = vec![
-                $($ident.message),*
+                $($ident.kind),*
             ];
 
-            Err($state.error(format!("expected one of: {}", errors.join(", "))))
+            Err($state.error(("", errors)))
         }
     };
 
