@@ -98,7 +98,7 @@ fn create_enum(name: Ident, generics: Generics, data: DataEnum) -> syn::Result<T
         quote!(
             #crate_name::parsing::ErrorKind::Expected {
                 message: #name.into(),
-                rule: #name.into()
+                rule: Some(#name.into())
             }
         )
     });
