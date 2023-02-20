@@ -29,8 +29,7 @@ impl std::fmt::Display for Operator {
             }
             Operator::Punct(punct) => {
                 let i = punct.iter().map(|m| m.as_char()).collect::<String>();
-
-                write!(f, "{}", i)
+                write!(f, "{i}")
             }
         }
     }

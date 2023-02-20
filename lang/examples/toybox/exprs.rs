@@ -2,10 +2,7 @@ use lang::{
     parsing::{Group, Punctuated},
     visitor, Parse, Peek, WithSpan,
 };
-use lang_lexing::{
-    tokens::{Ident, Literal},
-    Span,
-};
+use lang_lexing::tokens::{Ident, Literal};
 
 #[derive(Debug, Parse, WithSpan, Peek)]
 pub enum BinaryOperator {

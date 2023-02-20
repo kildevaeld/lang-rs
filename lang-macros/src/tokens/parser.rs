@@ -101,8 +101,7 @@ pub fn parse(input: ParseStream) -> syn::Result<Tokens> {
             }
             _ => {
                 return Err(input.error(format!(
-                    "expected oneof: keyword, punct or literal. found: {}",
-                    name_string
+                    "expected oneof: keyword, punct or literal. found: {name_string}",
                 )))
             }
         }
@@ -116,7 +115,6 @@ pub fn parse(input: ParseStream) -> syn::Result<Tokens> {
     let keywords = keywords.unwrap();
 
     Ok(Tokens {
-        // name,
         module_path,
         puncts,
         keywords,

@@ -12,5 +12,5 @@ fn main() {
 
     let ident = parse.parse::<(Ident, Ident, Punct, Punct, Punct, (Literal, Literal))>();
 
-    println!("tokens: {:#?}", ident);
+    println!("tokens: {ident:#?}");
 }

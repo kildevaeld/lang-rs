@@ -1,8 +1,6 @@
-use alloc::boxed::Box;
-
-use crate::{ErrorKind, Parser};
-
 use super::{cursor::Cursor, error::Error, reader::TokenReader, Peek};
+use crate::ErrorKind;
+use alloc::boxed::Box;
 
 pub trait Parse<'a, T>: Sized {
     /// Parse self from a token reader
@@ -90,7 +88,7 @@ where
 {
     #[allow(non_snake_case)]
     fn parse(state: &mut TokenReader<'a, '_, T>) -> Result<Self, Error> {
-        use alloc::{format, vec};
+        use alloc::vec;
         use either::Either;
         any_of!(state,
             L => l { Either::Left(l) },

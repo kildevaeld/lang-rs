@@ -74,7 +74,7 @@ fn peek_token(token: &ParseToken) -> TokenStream {
             vec![quote!(#lit)]
         }
 
-        ParseToken::Any(any) => any.into_iter().map(|m| quote!(#m)).collect(),
+        ParseToken::Any(any) => any.iter().map(|m| quote!(#m)).collect(),
         ParseToken::Ident(ident) => return quote!(input.clone().parse::<#ident>().is_ok()),
     };
 
@@ -89,7 +89,7 @@ fn parse_token(name: impl Into<Option<Ident>>, token: &ParseToken) -> TokenStrea
     let name = name.into().unwrap_or_else(|| format_ident!("_"));
 
     let (tokens, error_msg) = match token {
-        ParseToken::Operator(lit) => (vec![quote!(#lit)], format!("expected: {}", lit)),
+        ParseToken::Operator(lit) => (vec![quote!(#lit)], format!("expected: {lit}")),
 
         ParseToken::Any(any) => (
             any.iter().map(|m| quote!(#m)).collect(),

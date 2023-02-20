@@ -1,9 +1,7 @@
+use crate::exprs::Expr;
 use lang::lexing::tokens::Ident;
 use lang::parsing::{Group, Punctuated};
 use lang::{visitor, Parse, Peek, WithSpan};
-use lang_lexing::tokens::Token;
-
-use crate::exprs::Expr;
 
 pub type Block<'a> = Group<Token!["{"], Vec<Stmt<'a>>, Token!["}"]>;
 

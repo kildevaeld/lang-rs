@@ -17,15 +17,15 @@ pub enum ErrorKind {
 impl fmt::Display for ErrorKind {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            ErrorKind::Expected { message, rule } => {
-                write!(f, "{}", message)
+            ErrorKind::Expected { message, .. } => {
+                write!(f, "{message}")
             }
-            ErrorKind::OneOf { errors, rule } => {
+            ErrorKind::OneOf { errors, .. } => {
                 for (idx, next) in errors.iter().enumerate() {
                     if idx > 0 {
                         write!(f, " or ")?;
                     }
-                    write!(f, "{}", next)?
+                    write!(f, "{next}")?
                 }
                 Ok(())
             }

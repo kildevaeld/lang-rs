@@ -1,9 +1,7 @@
-use crate::ErrorKind;
-
 use super::error::Error;
+use crate::ErrorKind;
+use alloc::vec::Vec;
 use lang_lexing::{Span, TokenRef, WithSpan};
-
-use alloc::{borrow::Cow, vec::Vec};
 
 #[derive(Debug)]
 pub struct Cursor<'a, 'b, T> {
