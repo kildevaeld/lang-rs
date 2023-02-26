@@ -18,3 +18,4 @@ quote = "1"
 proc-macro2 = "1"
 proc-macro-crate = "1"
 Inflector = { version = "0.11", optional = true }
+darling = "0.14"

@@ -3,7 +3,6 @@
 use std::prelude::rust_2021::*;
 #[macro_use]
 extern crate std;
-use lang_lexing::Lexer;
 use lang_parsing::Parser;
 use stmt::Stmt;
 #[macro_use]
@@ -976,10 +975,7 @@ mod exprs {
         parsing::{Group, Punctuated},
         visitor, Parse, Peek, WithSpan,
     };
-    use lang_lexing::{
-        tokens::{Ident, Literal},
-        Span,
-    };
+    use lang_lexing::tokens::{Ident, Literal};
     pub enum BinaryOperator {
         Add(crate::tokens::Add),
         Sub(crate::tokens::Sub),
@@ -1029,7 +1025,29 @@ mod exprs {
             } else if state.peek::<crate::tokens::Lte>() {
                 return Ok(BinaryOperator::Lte(state.parse()?))
             }
-            Err(state.error(&["Add", "Sub", "Lte"]))
+            Err(
+                state
+                    .error((
+                        "BinaryOperator",
+                        <[_]>::into_vec(
+                            #[rustc_box]
+                            ::alloc::boxed::Box::new([
+                                lang::parsing::ErrorKind::Expected {
+                                    message: "Add".into(),
+                                    rule: Some("Add".into()),
+                                },
+                                lang::parsing::ErrorKind::Expected {
+                                    message: "Sub".into(),
+                                    rule: Some("Sub".into()),
+                                },
+                                lang::parsing::ErrorKind::Expected {
+                                    message: "Lte".into(),
+                                    rule: Some("Lte".into()),
+                                },
+                            ]),
+                        ),
+                    )),
+            )
         }
     }
     impl lang::lexing::WithSpan for BinaryOperator {
@@ -1250,13 +1268,33 @@ mod exprs {
     }
     pub trait ExprVisitor<'a> {
         type Output;
-        fn visit_literal_expr(&mut self, member: &mut Literal<'a>) -> Self::Output;
-        fn visit_ident_expr(&mut self, member: &mut IdentExpr<'a>) -> Self::Output;
-        fn visit_binary_expr(&mut self, member: &mut BinaryExpr<'a>) -> Self::Output;
-        fn visit_call_expr(&mut self, member: &mut CallExpr<'a>) -> Self::Output;
+        fn visit_literal_expr(&mut self, member: &Literal<'a>) -> Self::Output;
+        fn visit_ident_expr(&mut self, member: &IdentExpr<'a>) -> Self::Output;
+        fn visit_binary_expr(&mut self, member: &BinaryExpr<'a>) -> Self::Output;
+        fn visit_call_expr(&mut self, member: &CallExpr<'a>) -> Self::Output;
     }
     impl<'a> Expr<'a> {
-        fn accept<V: ExprVisitor<'a>>(&mut self, visitor: &mut V) -> V::Output {
+        pub fn accept<V: ExprVisitor<'a>>(&self, visitor: &mut V) -> V::Output {
+            match self {
+                Self::Literal(field_0) => visitor.visit_literal_expr(field_0),
+                Self::Ident(field_0) => visitor.visit_ident_expr(field_0),
+                Self::Binary(field_0) => visitor.visit_binary_expr(field_0),
+                Self::Call(field_0) => visitor.visit_call_expr(field_0),
+            }
+        }
+    }
+    pub trait ExprVisitorMut<'a> {
+        type Output;
+        fn visit_mut_literal_expr(&mut self, member: &mut Literal<'a>) -> Self::Output;
+        fn visit_mut_ident_expr(&mut self, member: &mut IdentExpr<'a>) -> Self::Output;
+        fn visit_mut_binary_expr(&mut self, member: &mut BinaryExpr<'a>) -> Self::Output;
+        fn visit_mut_call_expr(&mut self, member: &mut CallExpr<'a>) -> Self::Output;
+    }
+    impl<'a> Expr<'a> {
+        pub fn accept_mut<V: ExprVisitorMut<'a>>(
+            &mut self,
+            visitor: &mut V,
+        ) -> V::Output {
             match self {
                 Self::Literal(field_0) => visitor.visit_literal_expr(field_0),
                 Self::Ident(field_0) => visitor.visit_ident_expr(field_0),
@@ -1439,11 +1477,10 @@ mod exprs {
     }
 }
 mod stmt {
+    use crate::exprs::Expr;
     use lang::lexing::tokens::Ident;
     use lang::parsing::{Group, Punctuated};
     use lang::{visitor, Parse, Peek, WithSpan};
-    use lang_lexing::tokens::Token;
-    use crate::exprs::Expr;
     pub type Block<'a> = Group<
         crate::tokens::OpenBrace,
         Vec<Stmt<'a>>,
@@ -1766,13 +1803,13 @@ mod stmt {
     }
     pub trait StmtVisitor<'a> {
         type Output;
-        fn visit_func_stmt(&mut self, member: &mut FuncStmt<'a>) -> Self::Output;
-        fn visit_let_stmt(&mut self, member: &mut LetStmt<'a>) -> Self::Output;
-        fn visit_if_stmt(&mut self, member: &mut IfStmt<'a>) -> Self::Output;
-        fn visit_return_stmt(&mut self, member: &mut ReturnStmt<'a>) -> Self::Output;
+        fn visit_func_stmt(&mut self, member: &FuncStmt<'a>) -> Self::Output;
+        fn visit_let_stmt(&mut self, member: &LetStmt<'a>) -> Self::Output;
+        fn visit_if_stmt(&mut self, member: &IfStmt<'a>) -> Self::Output;
+        fn visit_return_stmt(&mut self, member: &ReturnStmt<'a>) -> Self::Output;
     }
     impl<'a> Stmt<'a> {
-        fn accept<V: StmtVisitor<'a>>(&mut self, visitor: &mut V) -> V::Output {
+        pub fn accept<V: StmtVisitor<'a>>(&self, visitor: &mut V) -> V::Output {
             match self {
                 Self::Func(field_0) => visitor.visit_func_stmt(field_0),
                 Self::Let(field_0) => visitor.visit_let_stmt(field_0),
@@ -1832,7 +1869,33 @@ mod stmt {
             } else if state.peek::<ReturnStmt<'_>>() {
                 return Ok(Stmt::Return(state.parse()?))
             }
-            Err(state.error(&["Func", "Let", "If", "Return"]))
+            Err(
+                state
+                    .error((
+                        "Stmt",
+                        <[_]>::into_vec(
+                            #[rustc_box]
+                            ::alloc::boxed::Box::new([
+                                lang::parsing::ErrorKind::Expected {
+                                    message: "Func".into(),
+                                    rule: Some("Func".into()),
+                                },
+                                lang::parsing::ErrorKind::Expected {
+                                    message: "Let".into(),
+                                    rule: Some("Let".into()),
+                                },
+                                lang::parsing::ErrorKind::Expected {
+                                    message: "If".into(),
+                                    rule: Some("If".into()),
+                                },
+                                lang::parsing::ErrorKind::Expected {
+                                    message: "Return".into(),
+                                    rule: Some("Return".into()),
+                                },
+                            ]),
+                        ),
+                    )),
+            )
         }
     }
     impl<'a> lang::lexing::WithSpan for Stmt<'a> {
@@ -1883,7 +1946,7 @@ mod stmt {
     }
 }
 fn main() {
-    let input = "\n\nfn fib(n) {\n    if n <= 1 {\n        return 1\n    }\n\n    return fib(n - 1) + fib(n - 2)\n}";
+    let input = "\n\nfn fib(n) {\n    if n <= 1 {\n        return 1\n    }\n\n\n    return fib(n - 1) + fib(n - 2)\n}";
     let lexer = tokens::Lexer::new(input);
     let mut parser = Parser::from_tokens(input, lexer.skip_whitespace(true).tokenize())
         .expect("lex");

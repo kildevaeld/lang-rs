@@ -1,23 +1,71 @@
 use crate::utils::fields_is_tuple;
+use darling::FromMeta;
 use proc_macro::TokenStream;
+use proc_macro2::TokenStream as TokenStream2;
 use quote::format_ident;
 use quote::quote;
 use syn::parse_macro_input;
+use syn::AttributeArgs;
 use syn::ItemEnum;
 
-pub fn run(_attr: TokenStream, item: TokenStream) -> TokenStream {
-    let enum_item = parse_macro_input!(item as ItemEnum);
+#[derive(FromMeta, Debug)]
+struct OptionParser {
+    #[darling(default)]
+    with_mut: bool,
+}
 
-    let visitor_name = format_ident!("{}Visitor", enum_item.ident);
+pub fn run(attr: TokenStream, item: TokenStream) -> TokenStream {
+    let enum_item = parse_macro_input!(item as ItemEnum);
+    let attr = parse_macro_input!(attr as AttributeArgs);
+
+    let args = match OptionParser::from_list(&attr) {
+        Ok(v) => v,
+        Err(e) => {
+            return TokenStream::from(e.write_errors());
+        }
+    };
+
+    let mut output = vec![generate(&enum_item, false)];
+
+    if args.with_mut {
+        output.push(generate(&enum_item, true));
+    }
+
+    quote!(
+        #enum_item
+
+        #(
+            #output
+        )*
+    )
+    .into()
+}
+
+fn generate(enum_item: &ItemEnum, mutating: bool) -> TokenStream2 {
+    let visitor_name = if mutating {
+        format_ident!("{}VisitorMut", enum_item.ident)
+    } else {
+        format_ident!("{}Visitor", enum_item.ident)
+    };
+
+    let reference = if mutating { quote!(&mut ) } else { quote!(&) };
 
     let enum_name = format_ident!("{}", enum_item.ident.to_string().to_lowercase());
 
     let methods = enum_item.variants.iter().map(|variant| {
-        let method_name = format_ident!(
-            "visit_{}_{}",
-            variant.ident.to_string().to_lowercase(),
-            enum_name
-        );
+        let method_name = if mutating {
+            format_ident!(
+                "visit_mut_{}_{}",
+                variant.ident.to_string().to_lowercase(),
+                enum_name
+            )
+        } else {
+            format_ident!(
+                "visit_{}_{}",
+                variant.ident.to_string().to_lowercase(),
+                enum_name
+            )
+        };
 
         let is_tuple = fields_is_tuple(&variant.fields);
 
@@ -26,7 +74,7 @@ pub fn run(_attr: TokenStream, item: TokenStream) -> TokenStream {
 
             if let Some(name) = &field.ident {
                 quote!(
-                    #name: &mut #ty
+                    #name: #reference #ty
                 )
             } else {
                 quote!(
@@ -38,11 +86,11 @@ pub fn run(_attr: TokenStream, item: TokenStream) -> TokenStream {
         let fields = if is_tuple {
             if variant.fields.len() == 1 {
                 quote!(
-                    member: &mut #(#fields),*
+                    member: #reference #(#fields),*
                 )
             } else {
                 quote!(
-                    member: &mut (#(#fields),*)
+                    member: #reference (#(#fields),*)
                 )
             }
         } else {
@@ -80,11 +128,19 @@ pub fn run(_attr: TokenStream, item: TokenStream) -> TokenStream {
             })
             .collect::<Vec<_>>();
 
-        let method_name = format_ident!(
-            "visit_{}_{}",
-            variant.ident.to_string().to_lowercase(),
-            enum_name
-        );
+        let method_name = if mutating {
+            format_ident!(
+                "visit_mut_{}_{}",
+                variant.ident.to_string().to_lowercase(),
+                enum_name
+            )
+        } else {
+            format_ident!(
+                "visit_{}_{}",
+                variant.ident.to_string().to_lowercase(),
+                enum_name
+            )
+        };
 
         if tuple {
             quote!(
@@ -99,8 +155,13 @@ pub fn run(_attr: TokenStream, item: TokenStream) -> TokenStream {
 
     let (generics_impl, generics_type, where_clause) = &enum_item.generics.split_for_impl();
 
+    let accept_method = if mutating {
+        format_ident!("accept_mut")
+    } else {
+        format_ident!("accept")
+    };
+
     quote!(
-        #enum_item
 
         pub trait #visitor_name #generics_type #where_clause {
             type Output;
@@ -108,8 +169,9 @@ pub fn run(_attr: TokenStream, item: TokenStream) -> TokenStream {
             #(#methods)*
         }
 
-        impl #generics_impl #name #generics_type #where_clause {
-            pub fn accept<V: #visitor_name #generics_type>(&mut self, visitor: &mut V) -> V::Output {
+
+        impl #generics_impl  #name #generics_type #where_clause {
+            pub fn #accept_method<V: #visitor_name #generics_type>(#reference self, visitor: &mut V) -> V::Output {
                 match self {
                     #(#accept),*
                 }
@@ -118,5 +180,4 @@ pub fn run(_attr: TokenStream, item: TokenStream) -> TokenStream {
 
 
     )
-    .into()
 }

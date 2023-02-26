@@ -32,7 +32,7 @@ pub struct CallExpr<'a> {
 }
 
 #[derive(Debug, Peek, WithSpan)]
-#[visitor]
+#[visitor(with_mut = true)]
 pub enum Expr<'a> {
     Literal(Literal<'a>),
     Ident(IdentExpr<'a>),
