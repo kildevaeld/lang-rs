@@ -1,9 +1,10 @@
 use lang::{
     lexing::tokens::{Ident, Literal, LiteralNumber, LiteralString, Punct, Token},
-    parsing::{Error, Ident as PeekIdent, Parse, Parser, Punctuated, TokenReader},
+    parsing::{Error, Parse, Parser, Punctuated, TokenReader},
+    Peek, WithSpan,
 };
 
-#[derive(Debug)]
+#[derive(Debug, Peek)]
 pub enum Expr {
     Add { left: Box<Expr>, right: Box<Expr> },
     Sub { left: Box<Expr>, right: Box<Expr> },
@@ -14,16 +15,16 @@ pub enum Expr {
     Call { object: Box<Expr>, params: Params },
 }
 
-#[derive(Debug)]
+#[derive(Debug, Peek)]
 pub struct Params {
     exprs: Vec<Expr>,
 }
 
 impl<'a> Parse<'a, Token<'a>> for Params {
     fn parse(state: &mut TokenReader<'a, '_, Token<'a>>) -> Result<Self, Error> {
-        let parser = Punctuated::<Expr, Token![,]>::terminated;
+        let exprs = Punctuated::<Expr, Token![,]>::parse(state)?;
 
-        let exprs = parser(state)?.into_iter().collect();
+        // let exprs = parser(state)?.into_iter().collect();
 
         Ok(Params { exprs })
     }
@@ -31,8 +32,8 @@ impl<'a> Parse<'a, Token<'a>> for Params {
 
 pub mod tokens {
     use super::*;
+
     lang::tokens!(
-        Token
         module_path: tokens
         puncts {
             "+" Add,
@@ -51,7 +52,7 @@ pub mod tokens {
             "fn" Func,
             "let" Let
         }
-        literal { LiteralString, LiteralNumber }
+        literals { LiteralString, LiteralNumber }
     );
 }
 

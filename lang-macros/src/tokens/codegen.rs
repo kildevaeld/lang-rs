@@ -5,19 +5,50 @@ use quote::quote;
 use super::parser::{Tokens, TypeList, Pair};
 
 fn extract(crate_name: &Ident, tokens: &Tokens) -> TokenStream {
-    let literals = tokens
-        .literals
+
+
+    let extracts = tokens
+        .comments
         .clone()
         .unwrap_or_else(|| TypeList {
             types: Vec::default(),
         })
         .types
         .into_iter()
-        .map(|ty| quote!(#ty));
+        .chain(tokens
+            .literals
+            .clone()
+            .unwrap_or_else(|| TypeList {
+                types: Vec::default(),
+            })
+            .types
+            .into_iter())
+        .map(|ty| quote!(#ty))
+        .chain(vec![
+            quote!(#crate_name::lexing::tokens::Punct<'input>),
+            quote!(#crate_name::lexing::tokens::Ident<'input>)
+        ]);
 
-    quote!(
-        (#(#literals),*, #crate_name::lexing::tokens::Punct<'input>, #crate_name::lexing::tokens::Ident<'input>)
-    )
+    // let literals = tokens
+    //     .literals
+    //     .clone()
+    //     .unwrap_or_else(|| TypeList {
+    //         types: Vec::default(),
+    //     })
+    //     .types
+    //     .into_iter()
+    //     .map(|ty| quote!(#ty));
+
+
+   
+
+    
+
+    // quote!(
+    //     (#(#literals),*, #crate_name::lexing::tokens::Punct<'input>, #crate_name::lexing::tokens::Ident<'input>)
+    // )
+
+    quote!((#(#extracts),*))
 }
 
 fn create_tokens(crate_name: &Ident, input: &Tokens) -> TokenStream {

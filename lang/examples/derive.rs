@@ -1,11 +1,10 @@
-use lang::{parsing::Parser, Parse};
+use lang::{parsing::Parser, Parse, Peek};
 use lang_lexing::{
     tokens::{Ident, Literal, LiteralNumber, LiteralString, Punct, Token},
     LexerFactory,
 };
 
 lang::tokens!(
-    Token
     puncts {
         "+" Add
 
@@ -16,14 +15,14 @@ lang::tokens!(
     literal { LiteralString, LiteralNumber }
 );
 
-#[derive(Debug, Parse)]
+#[derive(Debug, Parse, Peek)]
 pub struct Test<'a> {
     ident: Ident<'a>,
     operator_token: lang_lexing::tokens::Punct<'a>,
     literal: Literal<'a>,
 }
 
-#[derive(Debug, Parse)]
+#[derive(Debug, Parse, Peek)]
 pub enum TestEnum<'a> {
     #[parse("function")]
     Other {

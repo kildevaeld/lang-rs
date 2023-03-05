@@ -1,4 +1,7 @@
-use super::{whitespace::Whitespace, Comment, Ident, Literal, LiteralNumber, LiteralString, Punct};
+use super::{
+    whitespace::Whitespace, Comment, Ident, Literal, LiteralNumber, LiteralString,
+    MultilineComment, Punct, SinglelineComment,
+};
 use crate::{Lexer, LexerFactory, Span, TokenRef, WithSpan};
 
 bitflags::bitflags! {
@@ -35,6 +38,8 @@ impl<'a> Token<'a> {
 
 impl<'a> LexerFactory<'a, Token<'a>> for Token<'a> {
     type Extract = (
+        MultilineComment,
+        SinglelineComment,
         LiteralNumber,
         // LiteralBool,
         LiteralString,

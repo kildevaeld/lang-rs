@@ -59,6 +59,7 @@ pub struct Tokens {
     pub puncts: PairGroup,
     pub keywords: PairGroup,
     pub literals: Option<TypeList>,
+    pub comments: Option<TypeList>,
 }
 
 pub fn parse(input: ParseStream) -> syn::Result<Tokens> {
@@ -69,6 +70,7 @@ pub fn parse(input: ParseStream) -> syn::Result<Tokens> {
     let mut puncts = None;
     let mut keywords = None;
     let mut literals = None;
+    let mut comments = None;
 
     if input.peek(syn::Ident) && input.peek2(Token![:]) {
         if input.parse::<Ident>()?.to_string().as_str() != "module_path" {
@@ -96,12 +98,15 @@ pub fn parse(input: ParseStream) -> syn::Result<Tokens> {
             "keywords" | "keyword" | "Keyword" => {
                 keywords = Some(input.parse::<PairGroup>()?);
             }
-            "literal" => {
+            "literal" | "literals" => {
                 literals = Some(input.parse::<TypeList>()?);
+            }
+            "comment" | "comments" => {
+                comments = Some(input.parse::<TypeList>()?);
             }
             _ => {
                 return Err(input.error(format!(
-                    "expected oneof: keyword, punct or literal. found: {name_string}",
+                    "expected oneof: keyword, punct, literal or comment. found: {name_string}",
                 )))
             }
         }
@@ -119,5 +124,6 @@ pub fn parse(input: ParseStream) -> syn::Result<Tokens> {
         puncts,
         keywords,
         literals,
+        comments,
     })
 }
