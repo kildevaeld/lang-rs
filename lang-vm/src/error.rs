@@ -13,10 +13,10 @@ impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Error::BadThread(inner) => {
-                write!(f, "bad thread error: {}", inner)
+                write!(f, "bad thread error: {inner}")
             }
             Error::InvalidStackIndex { index } => {
-                write!(f, "invalid stack: {}", index)
+                write!(f, "invalid stack: {index}")
             }
         }
     }
