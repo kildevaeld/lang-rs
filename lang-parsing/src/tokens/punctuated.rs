@@ -1,10 +1,24 @@
 use crate::{Error, Parse, Peek, TokenReader};
 use alloc::vec::Vec;
+use lang_lexing::WithSpan;
 
 #[derive(Debug, Clone)]
 enum Entry<T, P> {
     Item(T),
     Punct(P),
+}
+
+impl<T, P> WithSpan for Entry<T, P>
+where
+    T: WithSpan,
+    P: WithSpan,
+{
+    fn span(&self) -> lang_lexing::Span {
+        match self {
+            Entry::Item(i) => i.span(),
+            Entry::Punct(p) => p.span(),
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -18,6 +32,17 @@ where
 {
     fn peek(cursor: &mut crate::Cursor<'a, '_, TOKEN>) -> bool {
         T::peek(cursor)
+    }
+}
+
+impl<T, P> WithSpan for Punctuated<T, P>
+where
+    T: WithSpan,
+    P: WithSpan,
+{
+    fn span(&self) -> lang_lexing::Span {
+        self.items.first().map(|m| m.span()).unwrap_or_default()
+            + self.items.last().map(|m| m.span()).unwrap_or_default()
     }
 }
 
