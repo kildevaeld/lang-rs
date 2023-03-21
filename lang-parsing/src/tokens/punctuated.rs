@@ -78,6 +78,12 @@ impl<T, P> Punctuated<T, P> {
             iter: self.items.iter(),
         }
     }
+
+    pub fn iter_mut(&mut self) -> PunctuatedIterMut<'_, T, P> {
+        PunctuatedIterMut {
+            iter: self.items.iter_mut(),
+        }
+    }
 }
 
 impl<T, P> IntoIterator for Punctuated<T, P> {
@@ -118,6 +124,27 @@ pub struct PunctuatedIter<'a, T, P> {
 
 impl<'a, T, P> Iterator for PunctuatedIter<'a, T, P> {
     type Item = &'a T;
+    fn next(&mut self) -> Option<Self::Item> {
+        loop {
+            let next = match self.iter.next() {
+                Some(next) => next,
+                None => return None,
+            };
+
+            match next {
+                Entry::Item(item) => return Some(item),
+                Entry::Punct(_) => {}
+            }
+        }
+    }
+}
+
+pub struct PunctuatedIterMut<'a, T, P> {
+    iter: core::slice::IterMut<'a, Entry<T, P>>,
+}
+
+impl<'a, T, P> Iterator for PunctuatedIterMut<'a, T, P> {
+    type Item = &'a mut T;
     fn next(&mut self) -> Option<Self::Item> {
         loop {
             let next = match self.iter.next() {
