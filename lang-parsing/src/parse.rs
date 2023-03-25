@@ -75,7 +75,7 @@ where
     T: Peek<'a, TOKEN>,
 {
     fn peek(cursor: &mut Cursor<'a, '_, TOKEN>) -> bool {
-        T::peek(cursor)
+        true //T::peek(cursor)
     }
 }
 
