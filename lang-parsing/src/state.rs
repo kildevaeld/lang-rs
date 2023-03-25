@@ -35,7 +35,7 @@ impl<'a, T> Parser<'a, T> {
         Ok(state)
     }
 
-    fn input(&self) -> &'a str {
+    pub fn input(&self) -> &'a str {
         self.input
     }
 
