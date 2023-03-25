@@ -35,6 +35,10 @@ impl<'a, T> Parser<'a, T> {
         Ok(state)
     }
 
+    fn input(&self) -> &'a str {
+        self.input
+    }
+
     fn reader<'b>(&'b mut self) -> TokenReader<'a, 'b, T> {
         TokenReader {
             input: self.input,
