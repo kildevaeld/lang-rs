@@ -117,6 +117,32 @@ impl core::ops::AddAssign for Span {
     }
 }
 
+macro_rules! withspan_impl {
+    ($first: ident) => {
+
+        impl<$first: WithSpan> WithSpan for ($first, ) {
+            fn span(&self) -> Span {
+                self.0.span()
+            }
+        }
+
+
+    };
+    ($first: ident $($rest:ident)*) => {
+        withspan_impl!($($rest)*);
+
+        #[allow(non_snake_case)]
+        impl<$first: WithSpan, $($rest: WithSpan),*> WithSpan for ($first, $($rest),*) {
+            fn span(&self) -> Span {
+                let ($first, $($rest),*) = self;
+                $first.span()  $(+ $rest.span())*
+            }
+        }
+    };
+}
+
+withspan_impl!(T1 T2 T3 T4 T5 T6 T7 T8 T9 T10 T11 T12 T13 T14 T15 T16);
+
 #[cfg(test)]
 mod test {
     use super::*;
