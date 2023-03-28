@@ -1,4 +1,4 @@
-use lang_lexing::{tokens::Token, Error, Extract, Lexer, LexerFactory, Span};
+use lang_lexing::{tokens::Token, LexerFactory};
 
 const INPUT: &str = r#"
 fn test() {

@@ -73,6 +73,12 @@ impl Span {
     }
 }
 
+impl WithSpan for Span {
+    fn span(&self) -> Span {
+        *self
+    }
+}
+
 impl<'a> From<(usize, &'a str)> for Span {
     fn from((pos, s): (usize, &'a str)) -> Self {
         Span::new(pos, pos + s.len())
@@ -90,7 +96,10 @@ impl core::ops::Add for Span {
     fn add(mut self, rhs: Self) -> Self::Output {
         if !rhs.is_valid() {
             return self;
+        } else if !self.is_valid() {
+            return rhs;
         }
+
         if rhs.start < self.start {
             self.start = rhs.start;
         }
@@ -105,5 +114,32 @@ impl core::ops::Add for Span {
 impl core::ops::AddAssign for Span {
     fn add_assign(&mut self, rhs: Self) {
         *self = *self + rhs;
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    macro_rules! span {
+        ($start:expr, $end: expr) => {
+            Span::new($start, $end)
+        };
+    }
+
+    #[test]
+    fn test_invalid() {
+        assert!(!Span::default().is_valid());
+        assert!(!Span::new(0, 0).is_valid());
+        assert!(!Span::new(2, 1).is_valid());
+    }
+
+    #[test]
+    fn test_add() {
+        assert_eq!(span!(0, 36), span!(0, 30) + span!(20, 36));
+        assert_eq!(span!(0, 40), span!(0, 10) + span!(30, 40));
+        assert_eq!(span!(10, 30), span!(15, 17) + span!(10, 30));
+        assert_eq!(span!(0, 1), span!(0, 1) + span!(0, 0));
+        assert_eq!(span!(0, 1), span!(0, 0) + span!(0, 1));
     }
 }

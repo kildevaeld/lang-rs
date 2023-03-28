@@ -74,8 +74,8 @@ impl<'a, T, TOKEN> Peek<'a, TOKEN> for Option<T>
 where
     T: Peek<'a, TOKEN>,
 {
-    fn peek(cursor: &mut Cursor<'a, '_, TOKEN>) -> bool {
-        true //T::peek(cursor)
+    fn peek(_cursor: &mut Cursor<'a, '_, TOKEN>) -> bool {
+        true
     }
 }
 

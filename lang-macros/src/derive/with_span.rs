@@ -26,6 +26,17 @@ fn fields_span(span: Span, fields: &[&Field]) -> syn::Result<TokenStream> {
         .map(|m| quote!(#m))
         .unwrap_or_else(|| quote!(0));
 
+    // if fields.len() > 1 {
+    //     let first = fields
+    //         .first()
+    //         .ok_or_else(|| syn::Error::new(span, "first field cannot be optional"))?;
+
+    //     fields.iter().skip(1).fold(
+    //         quote!(self.#first.span()),
+    //         |prev, next| quote!(#prev + #next.span()),
+    //     );
+    // }
+
     let ret = if first == last {
         quote!(self.#first_field.span())
     } else {
