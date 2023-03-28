@@ -11,6 +11,7 @@ proc-macro = true
 [features]
 default = []
 opcodes = ["Inflector"]
+serde = []
 
 [dependencies]
 # syn = { version = "1", features = ["full", "derive", "extra-traits"] }

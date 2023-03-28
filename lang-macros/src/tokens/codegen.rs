@@ -72,10 +72,19 @@ fn create_tokens(crate_name: &Ident, input: &Tokens) -> TokenStream {
         )
     });
 
+
+    #[cfg(feature = "serde")]
+    let serde = {
+        let serde = crate::utils::serde_crate();
+        quote!(Copy, #serde::Serialize, #serde::Deserialize)
+    };
+    #[cfg(not(feature = "serde"))]
+    let serde = quote!(Copy);
+
     let items = keywords.chain(puncts).map(|(name, peek, parse, constraint)| {
         
         quote!(
-            #[derive(Debug, Clone, Copy)]
+            #[derive(Debug, Clone, #serde)]
             pub struct #name {
                 pub span: #crate_name::lexing::Span
             }

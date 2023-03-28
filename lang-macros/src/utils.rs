@@ -24,6 +24,19 @@ pub fn lang_parsing() -> Ident {
     }
 }
 
+#[cfg(feature = "serde")]
+pub fn serde_crate() -> Ident {
+    let found_crate = crate_name("serde").expect("serde is present in `Cargo.toml`");
+
+    match found_crate {
+        FoundCrate::Itself => Ident::new("serde", Span::call_site()),
+        FoundCrate::Name(name) => {
+            let ident = Ident::new(&name, Span::call_site());
+            ident
+        }
+    }
+}
+
 pub fn path_is_option(path: &Path) -> bool {
     path.leading_colon.is_none()
         && path.segments.len() == 1
