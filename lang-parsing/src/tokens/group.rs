@@ -2,6 +2,7 @@ use lang_lexing::WithSpan;
 
 use crate::{Parse, Peek};
 
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Group<O, T, C> {
     pub open_token: O,

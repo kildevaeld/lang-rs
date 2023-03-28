@@ -2,6 +2,7 @@ use crate::{Error, Parse, Peek, TokenReader};
 use alloc::vec::Vec;
 use lang_lexing::WithSpan;
 
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone)]
 enum Entry<T, P> {
     Item(T),
@@ -21,6 +22,7 @@ where
     }
 }
 
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone)]
 pub struct Punctuated<T, P> {
     items: Vec<Entry<T, P>>,

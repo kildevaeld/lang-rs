@@ -9,7 +9,7 @@ edition = "2021"
 default = [ ]
 macros = ["lang-macros"]
 std = ["lang-lexing/std", "lang-parsing/std"]
-serde = ["lang-lexing/serde", "lang-macros?/serde"]
+serde = ["lang-lexing/serde", "lang-parsing/serde", "lang-macros?/serde"]
 
 [dependencies]
 lang-lexing = { path = "../lang-lexing", features = ["tokens"]}
