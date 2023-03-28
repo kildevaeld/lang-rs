@@ -18,4 +18,4 @@ unicode-segmentation = { version = "1" }
 serde = { version = "1", features = ["derive"], optional = true}
 either= { version = "1", optional = true}
 
-bitflags = { version = "1", optional = true}
+bitflags = { version = "2", optional = true}

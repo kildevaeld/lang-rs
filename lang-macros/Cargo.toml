@@ -13,7 +13,8 @@ default = []
 opcodes = ["Inflector"]
 
 [dependencies]
-syn = { version = "1", features = ["full", "derive", "extra-traits"] }
+# syn = { version = "1", features = ["full", "derive", "extra-traits"] }
+syn = { version = "1", features = [] }
 quote = "1"
 proc-macro2 = "1"
 proc-macro-crate = "1"

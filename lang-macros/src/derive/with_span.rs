@@ -11,40 +11,35 @@ pub fn create(input: DeriveInput) -> syn::Result<TokenStream> {
     }
 }
 
-fn fields_span(span: Span, fields: &[&Field]) -> syn::Result<TokenStream> {
+fn fields_span(fields: &[&Field]) -> syn::Result<TokenStream> {
+    let crate_name = lang_parsing();
+
     let first = fields
         .first()
-        .ok_or_else(|| syn::Error::new(span, "first field cannot be optional"))?;
+        .map(|first| {
+            first
+                .ident
+                .as_ref()
+                .map(|ident| quote!(self.#ident.span()))
+                .unwrap_or_else(|| quote!(self.0.span()))
+        })
+        .unwrap_or_else(|| quote!(#crate_name::lexing::Span::default()));
 
-    let last = fields
-        .first()
-        .ok_or_else(|| syn::Error::new(span, "last field cannot be optional"))?;
-
-    let first_field = first
-        .ident
-        .as_ref()
-        .map(|m| quote!(#m))
-        .unwrap_or_else(|| quote!(0));
-
-    // if fields.len() > 1 {
-    //     let first = fields
-    //         .first()
-    //         .ok_or_else(|| syn::Error::new(span, "first field cannot be optional"))?;
-
-    //     fields.iter().skip(1).fold(
-    //         quote!(self.#first.span()),
-    //         |prev, next| quote!(#prev + #next.span()),
-    //     );
-    // }
-
-    let ret = if first == last {
-        quote!(self.#first_field.span())
+    let ret = if fields.len() > 1 {
+        fields
+            .iter()
+            .skip(1)
+            .enumerate()
+            .fold(first, |prev, (idx, next)| {
+                let next = next
+                    .ident
+                    .as_ref()
+                    .map(|next| quote!(self.#next.span()))
+                    .unwrap_or_else(|| quote!(self.#idx.span()));
+                quote!(#prev + #next)
+            })
     } else {
-        let last = last.ident.as_ref().map(|m| quote!(#m)).unwrap_or_else(|| {
-            let len = fields.len();
-            quote!(#len)
-        });
-        quote!(self.#first + self.#last)
+        first
     };
 
     Ok(ret)
@@ -143,7 +138,7 @@ fn create_struct(name: Ident, generics: Generics, data: DataStruct) -> syn::Resu
 
     let fields = data.fields.iter().collect::<Vec<_>>();
 
-    let span = fields_span(Span::call_site(), &fields)?;
+    let span = fields_span(&fields)?;
 
     let (_, original_generics_impl, ty_gen, where_clause) = generics_impl(&generics);
 

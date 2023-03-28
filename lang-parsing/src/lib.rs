@@ -11,7 +11,6 @@ mod parse;
 mod peek;
 mod reader;
 mod state;
-//mod types;
 
 #[cfg(feature = "tokens")]
 pub mod tokens;
