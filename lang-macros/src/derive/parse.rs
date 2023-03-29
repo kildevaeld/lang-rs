@@ -108,8 +108,16 @@ fn create_enum(name: Ident, generics: Generics, data: DataEnum) -> syn::Result<T
     let ret = quote!(
         impl #generics_impl #crate_name::parsing::Parse<'parse, #crate_name::lexing::tokens::Token<'parse>> for #name #ty_gen #where_clause {
             fn parse(state: &mut  #crate_name::parsing::TokenReader<'parse, '_, #crate_name::lexing::tokens::Token<'parse>>) -> Result<Self, #crate_name::parsing::Error> {
+                use #crate_name::lexing::WithSpan;
+
+                let span = state.current().map(|m| m.span()).unwrap_or_default();
+
+
                 #(#parse)else*
-                Err(state.error((#name_str, vec![#(#error),*])))
+
+                let errors = vec![#(#error),*];
+
+                Err(#crate_name::parsing::Error::new((#name_str, errors), span))
             }
         }
 
