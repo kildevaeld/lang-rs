@@ -17,7 +17,7 @@ macro_rules! lex {
                 fn parse(state: &mut TokenReader<'a, '_, T>) -> Result<Self, Error> {
                     state.step(|cursor| match cursor.take::<$name>() {
                         Some(ret) => Ok(ret),
-                        None => Err(cursor.error(concat!("expected ", stringify!($name)))),
+                        None => Err(cursor.error(stringify!($name))),
                     })
                 }
             }
