@@ -5,7 +5,7 @@ pub use self::{group::*, punctuated::*};
 use crate::{Cursor, Error, Parse, Peek, TokenReader};
 use alloc::string::ToString;
 use lang_lexing::{
-    tokens::{Comment, Ident, Literal, Punct, Whitespace},
+    tokens::{Comment, Ident, Literal, Punct, Spacing, Whitespace},
     Span, TokenRef, WithSpan,
 };
 use unicode_segmentation::UnicodeSegmentation;
@@ -113,20 +113,28 @@ where
     T: TokenRef<Punct<'a>> + WithSpan,
 {
     let mut span: Option<Span> = None;
+    let mut spacing = Spacing::Alone;
+
     for part in token.split_word_bounds() {
         let punct = match cursor.take::<Punct<'a>>() {
             Some(punct) => punct,
             None => return Err(cursor.error(("punctuation".to_string(), token.to_string()))),
         };
         if punct.lexeme != part {
-            return Err(cursor.error(("punctiation".to_string(), token.to_string())));
+            return Err(cursor.error(("punctuation".to_string(), token.to_string())));
         }
+
+        spacing = punct.spacing;
 
         if let Some(span) = span.as_mut() {
             span.end = punct.span.end;
         } else {
             span = Some(punct.span);
         }
+    }
+    // Todos much puncts at the end of token
+    if spacing == Spacing::Joint {
+        return Err(cursor.error(("punctuation".to_string(), token.to_string())));
     }
 
     match span {
