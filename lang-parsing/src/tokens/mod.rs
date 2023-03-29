@@ -113,7 +113,6 @@ where
     T: TokenRef<Punct<'a>> + WithSpan,
 {
     let mut span: Option<Span> = None;
-    let mut spacing = Spacing::Alone;
 
     for part in token.split_word_bounds() {
         let punct = match cursor.take::<Punct<'a>>() {
@@ -124,17 +123,11 @@ where
             return Err(cursor.error(("punctuation".to_string(), token.to_string())));
         }
 
-        spacing = punct.spacing;
-
         if let Some(span) = span.as_mut() {
             span.end = punct.span.end;
         } else {
             span = Some(punct.span);
         }
-    }
-    // Todos much puncts at the end of token
-    if spacing == Spacing::Joint {
-        return Err(cursor.error(("punctuation".to_string(), token.to_string())));
     }
 
     match span {
