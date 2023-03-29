@@ -40,7 +40,7 @@ impl VisitType {
         match self {
             Self::Fold => format_ident!("{name}Fold"),
             Self::Mut => format_ident!("{name}VisitorMut"),
-            Self::Ref => format_ident!("visit_{name}Visitor"),
+            Self::Ref => format_ident!("{name}Visitor"),
         }
     }
 
