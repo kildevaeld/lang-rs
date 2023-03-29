@@ -6,12 +6,59 @@ use quote::format_ident;
 use quote::quote;
 use syn::parse_macro_input;
 use syn::AttributeArgs;
+use syn::Ident;
 use syn::ItemEnum;
 
 #[derive(FromMeta, Debug)]
 struct OptionParser {
     #[darling(default)]
     with_mut: bool,
+    #[darling(default)]
+    with_fold: bool,
+}
+
+enum VisitType {
+    Ref,
+    Mut,
+    Fold,
+}
+
+impl VisitType {
+    fn method_name(
+        &self,
+        variant: impl std::fmt::Display,
+        enum_name: impl std::fmt::Display,
+    ) -> Ident {
+        match self {
+            Self::Fold => format_ident!("fold_{variant}_{enum_name}"),
+            Self::Mut => format_ident!("visit_mut_{variant}_{enum_name}"),
+            Self::Ref => format_ident!("visit_{variant}_{enum_name}"),
+        }
+    }
+
+    fn trait_name(&self, name: impl std::fmt::Display) -> Ident {
+        match self {
+            Self::Fold => format_ident!("{name}Fold"),
+            Self::Mut => format_ident!("{name}VisitorMut"),
+            Self::Ref => format_ident!("visit_{name}Visitor"),
+        }
+    }
+
+    fn accept_name(&self) -> Ident {
+        match self {
+            Self::Fold => format_ident!("fold"),
+            Self::Mut => format_ident!("accept_mut"),
+            Self::Ref => format_ident!("accept"),
+        }
+    }
+
+    fn reference(&self) -> Option<TokenStream2> {
+        match self {
+            Self::Fold => None,
+            Self::Mut => Some(quote!(&mut)),
+            Self::Ref => Some(quote!(&)),
+        }
+    }
 }
 
 pub fn run(attr: TokenStream, item: TokenStream) -> TokenStream {
@@ -25,10 +72,14 @@ pub fn run(attr: TokenStream, item: TokenStream) -> TokenStream {
         }
     };
 
-    let mut output = vec![generate(&enum_item, false)];
+    let mut output = vec![generate(&enum_item, VisitType::Ref)];
 
     if args.with_mut {
-        output.push(generate(&enum_item, true));
+        output.push(generate(&enum_item, VisitType::Mut));
+    }
+
+    if args.with_fold {
+        output.push(generate(&enum_item, VisitType::Fold));
     }
 
     quote!(
@@ -41,31 +92,33 @@ pub fn run(attr: TokenStream, item: TokenStream) -> TokenStream {
     .into()
 }
 
-fn generate(enum_item: &ItemEnum, mutating: bool) -> TokenStream2 {
-    let visitor_name = if mutating {
-        format_ident!("{}VisitorMut", enum_item.ident)
-    } else {
-        format_ident!("{}Visitor", enum_item.ident)
-    };
+fn generate(enum_item: &ItemEnum, kind: VisitType) -> TokenStream2 {
+    // let visitor_name = if mutating {
+    //     format_ident!("{}VisitorMut", enum_item.ident)
+    // } else {
+    //     format_ident!("{}Visitor", enum_item.ident)
+    // };
+    let visitor_name = kind.trait_name(&enum_item.ident);
 
-    let reference = if mutating { quote!(&mut ) } else { quote!(&) };
+    let reference = kind.reference(); // if mutating { quote!(&mut ) } else { quote!(&) };
 
     let enum_name = format_ident!("{}", enum_item.ident.to_string().to_lowercase());
 
     let methods = enum_item.variants.iter().map(|variant| {
-        let method_name = if mutating {
-            format_ident!(
-                "visit_mut_{}_{}",
-                variant.ident.to_string().to_lowercase(),
-                enum_name
-            )
-        } else {
-            format_ident!(
-                "visit_{}_{}",
-                variant.ident.to_string().to_lowercase(),
-                enum_name
-            )
-        };
+        // let method_name = if mutating {
+        //     format_ident!(
+        //         "visit_mut_{}_{}",
+        //         variant.ident.to_string().to_lowercase(),
+        //         enum_name
+        //     )
+        // } else {
+        //     format_ident!(
+        //         "visit_{}_{}",
+        //         variant.ident.to_string().to_lowercase(),
+        //         enum_name
+        //     )
+        // };
+        let method_name = kind.method_name(variant.ident.to_string().to_lowercase(), &enum_name);
 
         let is_tuple = fields_is_tuple(&variant.fields);
 
@@ -128,19 +181,20 @@ fn generate(enum_item: &ItemEnum, mutating: bool) -> TokenStream2 {
             })
             .collect::<Vec<_>>();
 
-        let method_name = if mutating {
-            format_ident!(
-                "visit_mut_{}_{}",
-                variant.ident.to_string().to_lowercase(),
-                enum_name
-            )
-        } else {
-            format_ident!(
-                "visit_{}_{}",
-                variant.ident.to_string().to_lowercase(),
-                enum_name
-            )
-        };
+        // let method_name = if mutating {
+        //     format_ident!(
+        //         "visit_mut_{}_{}",
+        //         variant.ident.to_string().to_lowercase(),
+        //         enum_name
+        //     )
+        // } else {
+        //     format_ident!(
+        //         "visit_{}_{}",
+        //         variant.ident.to_string().to_lowercase(),
+        //         enum_name
+        //     )
+        // };
+        let method_name = kind.method_name(variant.ident.to_string().to_lowercase(), &enum_name);
 
         if tuple {
             quote!(
@@ -155,11 +209,12 @@ fn generate(enum_item: &ItemEnum, mutating: bool) -> TokenStream2 {
 
     let (generics_impl, generics_type, where_clause) = &enum_item.generics.split_for_impl();
 
-    let accept_method = if mutating {
-        format_ident!("accept_mut")
-    } else {
-        format_ident!("accept")
-    };
+    // let accept_method = if mutating {
+    //     format_ident!("accept_mut")
+    // } else {
+    //     format_ident!("accept")
+    // };
+    let accept_method = kind.accept_name();
 
     quote!(
 
