@@ -165,12 +165,12 @@ impl RuleItemKind {
     pub fn to_parse(&self, prefix: bool) -> TokenStream {
         match self {
             RuleItemKind::Parser { name } => {
-                quote!(input.parse::<#name>())
+                quote!(input.parse::<#name>()?)
             }
-            RuleItemKind::Prec => quote!(__expression(input, 0)),
+            RuleItemKind::Prec => quote!(__expression(input, 0)?),
             RuleItemKind::Rule { rule } => rule.parse_token(prefix),
             RuleItemKind::Token { name } => {
-                quote!(rule.parse::<#name>())
+                quote!(input.parse::<#name>()?)
             }
         }
     }

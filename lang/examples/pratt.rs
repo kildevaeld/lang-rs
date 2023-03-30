@@ -47,22 +47,23 @@ pub enum Expr<'a> {
 lang::precedence2! {
     expression -> Expr<'input>
     lhs:@ "=" !"=" rhs:@ {
-        Expr::Binary {
+        Ok(Expr::Binary {
             left: Box::new(lhs),
             right: Box::new(rhs),
             op: BinaryOperator::Add
-        }
+        })
     }
     --
     lhs:@ op:(("+" { BinaryOperator::Add }) / ("-" { BinaryOperator::Sub })) rhs:@ {
-        Expr::Binary {
+        Ok(Expr::Binary {
             left: Box::new(lhs),
             right: Box::new(rhs),
             op
-        }
+        })
     }
+    // --
     o:Literal {
-        Expr::Lit(o)
+        Ok(Expr::Lit(o))
     }
 }
 

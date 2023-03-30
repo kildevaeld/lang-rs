@@ -13,23 +13,15 @@ pub mod tokens {
         lang::lexing::tokens::Punct<'input>,
         lang::lexing::tokens::Ident<'input>,
     );
-    pub type Lexer<'input> = lang::lexing::Lexer<
-        'input,
-        Extract<'input>,
-        lang::lexing::tokens::Token<'input>,
-    >;
+    pub type Lexer<'input> =
+        lang::lexing::Lexer<'input, Extract<'input>, lang::lexing::tokens::Token<'input>>;
     pub struct Func {
         pub span: lang::lexing::Span,
     }
     #[automatically_derived]
     impl ::core::fmt::Debug for Func {
         fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-            ::core::fmt::Formatter::debug_struct_field1_finish(
-                f,
-                "Func",
-                "span",
-                &&self.span,
-            )
+            ::core::fmt::Formatter::debug_struct_field1_finish(f, "Func", "span", &&self.span)
         }
     }
     #[automatically_derived]
@@ -74,12 +66,7 @@ pub mod tokens {
     #[automatically_derived]
     impl ::core::fmt::Debug for Add {
         fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-            ::core::fmt::Formatter::debug_struct_field1_finish(
-                f,
-                "Add",
-                "span",
-                &&self.span,
-            )
+            ::core::fmt::Formatter::debug_struct_field1_finish(f, "Add", "span", &&self.span)
         }
     }
     #[automatically_derived]
@@ -124,12 +111,7 @@ pub mod tokens {
     #[automatically_derived]
     impl ::core::fmt::Debug for Sub {
         fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-            ::core::fmt::Formatter::debug_struct_field1_finish(
-                f,
-                "Sub",
-                "span",
-                &&self.span,
-            )
+            ::core::fmt::Formatter::debug_struct_field1_finish(f, "Sub", "span", &&self.span)
         }
     }
     #[automatically_derived]
@@ -174,12 +156,7 @@ pub mod tokens {
     #[automatically_derived]
     impl ::core::fmt::Debug for Mul {
         fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-            ::core::fmt::Formatter::debug_struct_field1_finish(
-                f,
-                "Mul",
-                "span",
-                &&self.span,
-            )
+            ::core::fmt::Formatter::debug_struct_field1_finish(f, "Mul", "span", &&self.span)
         }
     }
     #[automatically_derived]
@@ -224,12 +201,7 @@ pub mod tokens {
     #[automatically_derived]
     impl ::core::fmt::Debug for Div {
         fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-            ::core::fmt::Formatter::debug_struct_field1_finish(
-                f,
-                "Div",
-                "span",
-                &&self.span,
-            )
+            ::core::fmt::Formatter::debug_struct_field1_finish(f, "Div", "span", &&self.span)
         }
     }
     #[automatically_derived]
@@ -274,12 +246,7 @@ pub mod tokens {
     #[automatically_derived]
     impl ::core::fmt::Debug for OpenParens {
         fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-            ::core::fmt::Formatter::debug_struct_field1_finish(
-                f,
-                "OpenParens",
-                "span",
-                &&self.span,
-            )
+            ::core::fmt::Formatter::debug_struct_field1_finish(f, "OpenParens", "span", &&self.span)
         }
     }
     #[automatically_derived]
@@ -374,12 +341,7 @@ pub mod tokens {
     #[automatically_derived]
     impl ::core::fmt::Debug for OpenBrace {
         fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-            ::core::fmt::Formatter::debug_struct_field1_finish(
-                f,
-                "OpenBrace",
-                "span",
-                &&self.span,
-            )
+            ::core::fmt::Formatter::debug_struct_field1_finish(f, "OpenBrace", "span", &&self.span)
         }
     }
     #[automatically_derived]
@@ -424,12 +386,7 @@ pub mod tokens {
     #[automatically_derived]
     impl ::core::fmt::Debug for CloseBrace {
         fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-            ::core::fmt::Formatter::debug_struct_field1_finish(
-                f,
-                "CloseBrace",
-                "span",
-                &&self.span,
-            )
+            ::core::fmt::Formatter::debug_struct_field1_finish(f, "CloseBrace", "span", &&self.span)
         }
     }
     #[automatically_derived]
@@ -474,12 +431,7 @@ pub mod tokens {
     #[automatically_derived]
     impl ::core::fmt::Debug for Comma {
         fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-            ::core::fmt::Formatter::debug_struct_field1_finish(
-                f,
-                "Comma",
-                "span",
-                &&self.span,
-            )
+            ::core::fmt::Formatter::debug_struct_field1_finish(f, "Comma", "span", &&self.span)
         }
     }
     #[automatically_derived]
@@ -524,12 +476,7 @@ pub mod tokens {
     #[automatically_derived]
     impl ::core::fmt::Debug for Assign {
         fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-            ::core::fmt::Formatter::debug_struct_field1_finish(
-                f,
-                "Assign",
-                "span",
-                &&self.span,
-            )
+            ::core::fmt::Formatter::debug_struct_field1_finish(f, "Assign", "span", &&self.span)
         }
     }
     #[automatically_derived]
@@ -603,7 +550,11 @@ impl ::core::clone::Clone for BinaryOperator {
 }
 pub enum Expr<'a> {
     Lit(Literal<'a>),
-    Binary { left: Box<Expr<'a>>, right: Box<Expr<'a>>, op: BinaryOperator },
+    Binary {
+        left: Box<Expr<'a>>,
+        right: Box<Expr<'a>>,
+        op: BinaryOperator,
+    },
 }
 #[automatically_derived]
 impl<'a> ::core::fmt::Debug for Expr<'a> {
@@ -612,18 +563,13 @@ impl<'a> ::core::fmt::Debug for Expr<'a> {
             Expr::Lit(__self_0) => {
                 ::core::fmt::Formatter::debug_tuple_field1_finish(f, "Lit", &__self_0)
             }
-            Expr::Binary { left: __self_0, right: __self_1, op: __self_2 } => {
-                ::core::fmt::Formatter::debug_struct_field3_finish(
-                    f,
-                    "Binary",
-                    "left",
-                    __self_0,
-                    "right",
-                    __self_1,
-                    "op",
-                    &__self_2,
-                )
-            }
+            Expr::Binary {
+                left: __self_0,
+                right: __self_1,
+                op: __self_2,
+            } => ::core::fmt::Formatter::debug_struct_field3_finish(
+                f, "Binary", "left", __self_0, "right", __self_1, "op", &__self_2,
+            ),
         }
     }
 }
@@ -633,13 +579,15 @@ impl<'a> ::core::clone::Clone for Expr<'a> {
     fn clone(&self) -> Expr<'a> {
         match self {
             Expr::Lit(__self_0) => Expr::Lit(::core::clone::Clone::clone(__self_0)),
-            Expr::Binary { left: __self_0, right: __self_1, op: __self_2 } => {
-                Expr::Binary {
-                    left: ::core::clone::Clone::clone(__self_0),
-                    right: ::core::clone::Clone::clone(__self_1),
-                    op: ::core::clone::Clone::clone(__self_2),
-                }
-            }
+            Expr::Binary {
+                left: __self_0,
+                right: __self_1,
+                op: __self_2,
+            } => Expr::Binary {
+                left: ::core::clone::Clone::clone(__self_0),
+                right: ::core::clone::Clone::clone(__self_1),
+                op: ::core::clone::Clone::clone(__self_2),
+            },
         }
     }
 }
@@ -650,14 +598,10 @@ mod expression {
         parsing::{Parse, Peek, TokenReader, Cursor, Error},
         lexing::{tokens::Token, WithSpan, Span},
     };
-    fn __get_precedence<'input>(
-        input: &mut TokenReader<'input, '_, Token<'input>>,
-    ) -> u8 {
+    fn __get_precedence<'input>(input: &mut TokenReader<'input, '_, Token<'input>>) -> u8 {
         if input.peek::<crate::tokens::Assign>() {
             1u8
-        } else if input.peek::<crate::tokens::Add>()
-            || input.peek::<crate::tokens::Sub>()
-        {
+        } else if input.peek::<crate::tokens::Add>() || input.peek::<crate::tokens::Sub>() {
             2u8
         } else {
             0u8
@@ -667,8 +611,10 @@ mod expression {
         input: &mut TokenReader<'input, '_, Token<'input>>,
     ) -> Result<Expr<'input>, Error> {
         if input.peek::<Literal>() {
-            let (o) = (input.parse::<Literal>());
-            { Expr::Lit(o) }
+            let (o) = (input.parse::<Literal>()?);
+            {
+                Ok(Expr::Lit(o))
+            }
         } else {
             ::core::panicking::panic_fmt(format_args!(""))
         }
@@ -679,35 +625,31 @@ mod expression {
     ) -> Result<Expr<'input>, Error> {
         if input.peek::<crate::tokens::Assign>() {
             let (_, _, rhs) = (
-                rule.parse::<crate::tokens::Assign>(),
-                rule.parse::<crate::tokens::Assign>(),
-                __expression(input, 0),
+                input.parse::<crate::tokens::Assign>()?,
+                input.parse::<crate::tokens::Assign>()?,
+                __expression(input, 0)?,
             );
             {
-                Expr::Binary {
+                Ok(Expr::Binary {
                     left: Box::new(lhs),
                     right: Box::new(rhs),
                     op: BinaryOperator::Add,
-                }
+                })
             }
-        } else if input.peek::<crate::tokens::Add>()
-            || input.peek::<crate::tokens::Sub>()
-        {
+        } else if input.peek::<crate::tokens::Add>() || input.peek::<crate::tokens::Sub>() {
             let (op, rhs) = (
-                if input.peek::<crate::tokens::Add>()
-                    || input.peek::<crate::tokens::Sub>()
-                {
+                if input.peek::<crate::tokens::Add>() || input.peek::<crate::tokens::Sub>() {
                     let () = ();
                     {}
                 },
-                __expression(input, 0),
+                __expression(input, 0)?,
             );
             {
-                Expr::Binary {
+                Ok(Expr::Binary {
                     left: Box::new(lhs),
                     right: Box::new(rhs),
                     op,
-                }
+                })
             }
         } else {
             ::core::panicking::panic_fmt(format_args!(""))
@@ -739,6 +681,6 @@ mod expression {
 fn main() {
     let input = "20 - 100 / 2";
     let lexer = tokens::Lexer::new(input);
-    let mut parser = Parser::from_tokens(input, lexer.skip_whitespace(true).tokenize())
-        .expect("lex");
+    let mut parser =
+        Parser::from_tokens(input, lexer.skip_whitespace(true).tokenize()).expect("lex");
 }

@@ -28,10 +28,12 @@ pub fn run(bundle: Bundle) -> TokenStream {
 
             fn __prefix<'input>(input: &mut TokenReader<'input, '_, Token<'input>>) -> Result<#return_type, Error> {
                 #prefix_fn
+
             }
 
             fn __infix<'input>(input: &mut TokenReader<'input, '_, Token<'input>>, left: #return_type) -> Result<#return_type, Error> {
                  #infix_fn
+
             }
 
             fn __expression<'input>(input: &mut TokenReader<'input, '_, Token<'input>>, precedence: u8) -> Result<#return_type, Error> {
@@ -113,7 +115,7 @@ impl Rule {
                 values.push(quote!(
                     #(#iter)else*
                     else {
-                        panic!()
+                        panic!("alternative")
                     }
                 ));
             }
