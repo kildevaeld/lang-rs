@@ -65,5 +65,3 @@ lang::precedence! {
        }
     }
 }
-
-lang::precedence2! {}
