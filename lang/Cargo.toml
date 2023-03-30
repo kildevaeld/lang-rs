@@ -6,15 +6,15 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-default = [ ]
+default = []
 macros = ["lang-macros"]
 std = ["lang-lexing/std", "lang-parsing/std"]
 serde = ["lang-lexing/serde", "lang-parsing/serde", "lang-macros?/serde"]
 
 [dependencies]
-lang-lexing = { path = "../lang-lexing", features = ["tokens"]}
+lang-lexing = { path = "../lang-lexing", features = ["tokens"] }
 lang-parsing = { path = "../lang-parsing", features = ["tokens"] }
-lang-macros = { path ="../lang-macros", optional = true}
+lang-macros = { path = "../lang-macros", optional = true }
 
 
 [[example]]
@@ -48,4 +48,9 @@ required-features = ["macros"]
 [[example]]
 path = "examples/toybox/main.rs"
 name = "toybox"
+required-features = ["macros"]
+
+[[example]]
+path = "examples/pratt.rs"
+name = "pratt"
 required-features = ["macros"]
