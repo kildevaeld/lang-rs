@@ -1,4 +1,4 @@
-use lang_lexing::tokens::{Literal, LiteralNumber};
+use lang_lexing::tokens::{Ident, Literal, LiteralNumber};
 use lang_parsing::Parser;
 
 #[macro_use]
@@ -42,6 +42,7 @@ pub enum Expr<'a> {
         right: Box<Expr<'a>>,
         op: BinaryOperator,
     },
+    Ident(Ident<'a>),
 }
 
 lang::precedence3! {
@@ -53,18 +54,21 @@ lang::precedence3! {
             op: BinaryOperator::Add
         })
     }
-    --
-    rule lhs:@ op:(("+" { BinaryOperator::Add }) / ("-" { BinaryOperator::Sub })) rhs:@ {
+     --
+    rule lhs:@ op:("+" { BinaryOperator::Add } / "-" { BinaryOperator::Sub }) rhs:@ {
         Ok(Expr::Binary {
             left: Box::new(lhs),
             right: Box::new(rhs),
             op
         })
     }
-    // --
+    --
     rule o:Literal {
         Ok(Expr::Lit(o))
+    } / i:Ident {
+        Ok(Expr::Ident(i))
     }
+
 }
 
 fn main() {

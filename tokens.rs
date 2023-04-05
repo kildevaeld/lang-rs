@@ -3,7 +3,7 @@
 use std::prelude::rust_2021::*;
 #[macro_use]
 extern crate std;
-use lang_lexing::tokens::{Literal, LiteralNumber};
+use lang_lexing::tokens::{Ident, Literal, LiteralNumber};
 use lang_parsing::Parser;
 #[macro_use]
 pub mod tokens {
@@ -555,6 +555,7 @@ pub enum Expr<'a> {
         right: Box<Expr<'a>>,
         op: BinaryOperator,
     },
+    Ident(Ident<'a>),
 }
 #[automatically_derived]
 impl<'a> ::core::fmt::Debug for Expr<'a> {
@@ -570,6 +571,9 @@ impl<'a> ::core::fmt::Debug for Expr<'a> {
             } => ::core::fmt::Formatter::debug_struct_field3_finish(
                 f, "Binary", "left", __self_0, "right", __self_1, "op", &__self_2,
             ),
+            Expr::Ident(__self_0) => {
+                ::core::fmt::Formatter::debug_tuple_field1_finish(f, "Ident", &__self_0)
+            }
         }
     }
 }
@@ -588,6 +592,7 @@ impl<'a> ::core::clone::Clone for Expr<'a> {
                 right: ::core::clone::Clone::clone(__self_1),
                 op: ::core::clone::Clone::clone(__self_2),
             },
+            Expr::Ident(__self_0) => Expr::Ident(::core::clone::Clone::clone(__self_0)),
         }
     }
 }
@@ -598,8 +603,11 @@ mod expression {
         parsing::{Parse, Peek, TokenReader, Cursor, Error},
         lexing::{tokens::Token, WithSpan, Span},
     };
+    fn __peek<'input>(input: &mut Cursor<'input, '_, Token<'input>>) -> bool {
+        input.peek::<Literal>() || input.peek::<Ident>()
+    }
     fn __get_precedence<'input>(input: &mut TokenReader<'input, '_, Token<'input>>) -> u8 {
-        if input.peek::<crate::tokens::Assign>() {
+        if (input.peek::<crate::tokens::Assign>() && !input.peek::<crate::tokens::Assign>()) {
             1u8
         } else if input.peek::<crate::tokens::Add>() || input.peek::<crate::tokens::Sub>() {
             2u8
@@ -611,24 +619,28 @@ mod expression {
         input: &mut TokenReader<'input, '_, Token<'input>>,
     ) -> Result<Expr<'input>, Error> {
         if input.peek::<Literal>() {
-            let (o) = (input.parse::<Literal>()?);
+            let o = input.parse::<Literal>()?;
             {
                 Ok(Expr::Lit(o))
             }
+        } else if input.peek::<Ident>() {
+            let i = input.parse::<Ident>()?;
+            {
+                Ok(Expr::Ident(i))
+            }
         } else {
-            ::core::panicking::panic_fmt(format_args!(""))
+            ::core::panicking::panic_fmt(format_args!("something"))
         }
+        ()
     }
     fn __infix<'input>(
         input: &mut TokenReader<'input, '_, Token<'input>>,
         left: Expr<'input>,
     ) -> Result<Expr<'input>, Error> {
-        if input.peek::<crate::tokens::Assign>() {
-            let (_, _, rhs) = (
-                input.parse::<crate::tokens::Assign>()?,
-                input.parse::<crate::tokens::Assign>()?,
-                __expression(input, 0)?,
-            );
+        if (input.peek::<crate::tokens::Assign>() && !input.peek::<crate::tokens::Assign>()) {
+            let lhs = left;
+            let _ = input.parse::<crate::tokens::Assign>()?;
+            let rhs = __expression(input, 0u8)?;
             {
                 Ok(Expr::Binary {
                     left: Box::new(lhs),
@@ -636,24 +648,10 @@ mod expression {
                     op: BinaryOperator::Add,
                 })
             }
-        } else if input.peek::<crate::tokens::Add>() || input.peek::<crate::tokens::Sub>() {
-            let (op, rhs) = (
-                if input.peek::<crate::tokens::Add>() || input.peek::<crate::tokens::Sub>() {
-                    let () = ();
-                    {}
-                },
-                __expression(input, 0)?,
-            );
-            {
-                Ok(Expr::Binary {
-                    left: Box::new(lhs),
-                    right: Box::new(rhs),
-                    op,
-                })
-            }
         } else {
-            ::core::panicking::panic_fmt(format_args!(""))
+            ::core::panicking::panic_fmt(format_args!("something"))
         }
+        ()
     }
     fn __expression<'input>(
         input: &mut TokenReader<'input, '_, Token<'input>>,
@@ -675,6 +673,11 @@ mod expression {
             input: &mut TokenReader<'input, '_, Token<'input>>,
         ) -> Result<Expr<'input>, Error> {
             parse(input)
+        }
+    }
+    impl<'input> Peek<'input, Token<'input>> for Expr<'input> {
+        fn peek(cursor: &mut Cursor<'input, '_, Token<'input>>) -> bool {
+            __peek(cursor)
         }
     }
 }
