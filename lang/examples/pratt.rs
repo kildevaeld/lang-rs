@@ -44,9 +44,9 @@ pub enum Expr<'a> {
     },
 }
 
-lang::precedence2! {
+lang::precedence3! {
     expression -> Expr<'input>
-    lhs:@ "=" !"=" rhs:@ {
+    rule lhs:@ "=" !"=" rhs:@ {
         Ok(Expr::Binary {
             left: Box::new(lhs),
             right: Box::new(rhs),
@@ -54,7 +54,7 @@ lang::precedence2! {
         })
     }
     --
-    lhs:@ op:(("+" { BinaryOperator::Add }) / ("-" { BinaryOperator::Sub })) rhs:@ {
+    rule lhs:@ op:(("+" { BinaryOperator::Add }) / ("-" { BinaryOperator::Sub })) rhs:@ {
         Ok(Expr::Binary {
             left: Box::new(lhs),
             right: Box::new(rhs),
@@ -62,7 +62,7 @@ lang::precedence2! {
         })
     }
     // --
-    o:Literal {
+    rule o:Literal {
         Ok(Expr::Lit(o))
     }
 }

@@ -8,6 +8,7 @@ mod utils;
 mod visitor;
 
 mod pratt2;
+mod pratt3;
 
 use proc_macro::TokenStream;
 
@@ -25,6 +26,11 @@ pub fn precedence(input: TokenStream) -> TokenStream {
 #[proc_macro]
 pub fn precedence2(input: TokenStream) -> TokenStream {
     pratt2::run(input.into()).into()
+}
+
+#[proc_macro]
+pub fn precedence3(input: TokenStream) -> TokenStream {
+    pratt3::run(input.into()).into()
 }
 
 #[cfg(feature = "opcodes")]
