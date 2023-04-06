@@ -83,4 +83,16 @@ impl<'a, 'b, T> Cursor<'a, 'b, T> {
     pub fn peek<P: Peek<'a, T>>(&mut self) -> bool {
         P::peek(self)
     }
+
+    pub fn peek2<P: Peek<'a, T>>(&mut self) -> bool {
+        self.peek_offset::<P>(1)
+    }
+
+    pub fn peek_offset<P: Peek<'a, T>>(&mut self, offset: usize) -> bool {
+        P::peek(&mut Cursor {
+            input: self.input,
+            tokens: self.tokens,
+            current: self.current + offset,
+        })
+    }
 }
