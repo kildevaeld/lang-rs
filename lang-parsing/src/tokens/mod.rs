@@ -5,7 +5,7 @@ pub use self::{group::*, punctuated::*};
 use crate::{Cursor, Error, Parse, Peek, TokenReader};
 use alloc::string::ToString;
 use lang_lexing::{
-    tokens::{Comment, Ident, Literal, Punct, Spacing, Whitespace},
+    tokens::{Comment, Ident, Literal, Punct, Whitespace},
     Span, TokenRef, WithSpan,
 };
 use unicode_segmentation::UnicodeSegmentation;

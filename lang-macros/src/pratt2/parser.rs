@@ -1,190 +1,439 @@
-use proc_macro2::{Group, TokenStream};
-use proc_macro2::{Punct, Spacing};
+use darling::ToTokens;
+use proc_macro2::{Group, Punct, Spacing, TokenStream};
 use quote::quote;
-use quote::ToTokens;
 use syn::{
-    ext::IdentExt,
     parse::{Parse, Parser},
-    token::Paren,
-    Block, ExprBlock, Ident, LitStr, Token, Type,
+    punctuated::Punctuated,
+    Block, Ident, LitStr, Token, Type,
 };
 
-pub fn parse(stream: TokenStream) -> syn::Result<Bundle> {
-    Bundle::parse.parse2(stream)
+mod kw {
+    syn::custom_keyword!(rule);
 }
 
-#[derive(Debug, Clone)]
-pub struct Bundle {
-    pub module: Ident,
+pub fn parse(tokens: TokenStream) -> syn::Result<Pratt> {
+    Pratt::parse.parse2(tokens)
+}
+
+#[derive(Debug)]
+pub struct Pratt {
+    pub module_name: Ident,
     pub return_type: Type,
-    pub rule_list: Vec<RuleGroup>,
+    pub rules: Vec<RuleGroup>,
 }
 
-impl Parse for Bundle {
-    fn parse(stream: syn::parse::ParseStream) -> syn::Result<Self> {
-        let fn_name = stream.parse::<Ident>()?;
-        let _ = stream.parse::<Token![->]>()?;
-        let ret_name = stream.parse::<Type>()?;
+impl Parse for Pratt {
+    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+        let module_name = input.parse::<Ident>()?;
+        let _ = input.parse::<Token![->]>()?;
+        let return_type = input.parse::<Type>()?;
 
-        let mut precedence_list = Vec::default();
-        loop {
-            if stream.is_empty() {
+        let mut rules = Vec::default();
+
+        while !input.is_empty() {
+            rules.push(input.parse()?);
+
+            if input.peek(Token![-]) && input.peek2(Token![-]) {
+                let _ = input.parse::<Token![-]>()?;
+                let _ = input.parse::<Token![-]>()?;
+            } else {
                 break;
             }
-
-            let rule_list = stream.parse::<RuleGroup>()?;
-
-            precedence_list.push(rule_list);
-
-            if stream.is_empty() {
-                break;
-            }
-
-            let _ = stream.parse::<Token![-]>()?;
-            let _ = stream.parse::<Token![-]>()?;
         }
 
-        Ok(Bundle {
-            module: fn_name,
-            return_type: ret_name,
-            rule_list: precedence_list,
+        Ok(Pratt {
+            module_name,
+            return_type,
+            rules,
         })
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct Rule {
-    pub items: Vec<RuleEntry>,
-    pub map: Option<Block>,
+#[derive(Debug)]
+pub struct RuleGroup {
+    pub rules: Vec<Precedence>,
 }
 
-#[derive(Debug, Clone)]
-pub enum RuleEntry {
-    Single(RuleItem),
-    Alternatives(Vec<RuleItem>),
-}
+// impl RuleGroup {
+//     pub fn peek(&self) -> TokenStream {
+//         let peek = self.rules.iter().map(|m| m.peek());
+//         quote!(
+//             #(#peek)||*
+//         )
+//     }
+// }
 
-impl RuleEntry {
-    pub fn is_prefix(&self) -> bool {
-        let item = match self {
-            Self::Single(s) => s,
-            Self::Alternatives(s) => match s.first() {
-                Some(s) => s,
-                None => return false,
-            },
-        };
+impl Parse for RuleGroup {
+    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+        let mut rules = Vec::default();
 
-        !matches!(item.kind, RuleItemKind::Prec)
-    }
+        while !input.is_empty() {
+            let _ = input.parse::<kw::rule>()?;
+            rules.push(input.parse()?);
 
-    pub fn peek(&self) -> Option<TokenStream> {
-        match self {
-            RuleEntry::Single(s) => s.peek(),
-            RuleEntry::Alternatives(s) => {
-                let stream = s.iter().filter_map(|m| m.peek());
-                Some(quote!(
-                    #(#stream)||*
-                ))
+            if !input.peek(kw::rule) {
+                break;
             }
         }
+
+        Ok(RuleGroup { rules })
     }
 }
 
-impl Parse for RuleEntry {
+#[derive(Debug)]
+pub struct Precedence {
+    pub rules: Vec<Rule>,
+}
+
+impl Parse for Precedence {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
-        let items = input.parse::<RuleItem>()?;
-        let mut or_items = Vec::default();
-        while input.peek(Token![/]) {
-            let _ = input.parse::<Token![/]>()?;
-            or_items.push(input.parse()?);
+        let mut rules = Vec::default();
+        while !input.is_empty() {
+            let rule = input.parse()?;
+            rules.push(rule);
+            if input.peek(Token![/]) {
+                let _ = input.parse::<Token![/]>()?;
+            } else {
+                break;
+            }
         }
 
-        let entry = if !or_items.is_empty() {
-            let mut items = vec![items];
-            items.extend(or_items);
-            RuleEntry::Alternatives(items)
-        } else {
-            RuleEntry::Single(items)
-        };
-
-        Ok(entry)
+        Ok(Precedence { rules })
     }
+}
+
+// impl Precedence {
+//     pub fn peek(&self) -> TokenStream {
+//         let iter = self.rules.iter().map(|item| item.peek());
+//         quote!(
+//             #(#iter)||*
+//         )
+//     }
+// }
+
+#[derive(Debug)]
+pub struct Rule {
+    pub items: Vec<Expr>,
+    pub action: Option<Block>,
 }
 
 impl Rule {
-    pub fn peek(&self) -> Option<TokenStream> {
-        match self.items.iter().find(|m| m.is_prefix()) {
-            Some(m) => m.peek(),
-            None => None,
+    pub fn peek(&self) -> TokenStream {
+        let iter: Box<dyn Iterator<Item = _>> = if self.is_prefix() {
+            Box::new(self.items.iter())
+        } else {
+            Box::new(self.items.iter().skip_while(|item| item.is_prec()))
+        };
+
+        let iter = iter
+            .take_while(|item| !item.is_prec())
+            .enumerate()
+            .map(|(idx, item)| item.peekn(idx))
+            .collect::<Vec<_>>();
+
+        if iter.len() == 1 {
+            quote!(
+               #(#iter)&&*
+            )
+        } else {
+            quote!(
+               ( #(#iter)&&*)
+            )
+        }
+    }
+
+    pub fn peek_prefix(&self) -> TokenStream {
+        let iter: Box<dyn Iterator<Item = _>> = if self.is_prefix() {
+            Box::new(self.items.iter())
+        } else {
+            Box::new(self.items.iter().skip_while(|item| item.is_prec()))
+        };
+
+        let iter = iter
+            .take_while(|item| !item.is_prec())
+            .map(|item| item.peek())
+            .collect::<Vec<_>>();
+
+        if iter.len() == 1 {
+            quote!(
+               #(#iter)&&*
+            )
+        } else {
+            quote!(
+               ( #(#iter)&&*)
+            )
         }
     }
 
     pub fn is_prefix(&self) -> bool {
-        self.items
-            .first()
-            .map(|m| m.is_prefix())
-            .unwrap_or_default()
+        !self.items[0].is_prec()
+    }
+
+    pub fn build_parse(&self, level: u8) -> TokenStream {
+        let parse = self
+            .items
+            .iter()
+            .skip(if self.is_prefix() { 0 } else { 1 })
+            .filter_map(|expr| match expr {
+                Expr::Named { name, atom } => {
+                    let parse = atom.create_parse(level);
+                    Some(quote!(
+                        let #name = #parse;
+                    ))
+                }
+                Expr::UnNamed { atom } => {
+                    let parse = atom.create_parse(level);
+                    Some(quote!(
+                        let _ = #parse;
+                    ))
+                }
+                Expr::Not { .. } => None,
+            });
+
+        let peek = self.peek();
+
+        let first = if !self.is_prefix() {
+            let first = self.items.first().expect("first item");
+            if let Expr::Named { name, .. } = first {
+                Some(quote!(
+                    let #name = left;
+                ))
+            } else {
+                None
+            }
+        } else {
+            None
+        };
+
+        let action = if let Some(action) = &self.action {
+            quote!(
+                #first
+                #(#parse)*
+                #action
+            )
+        } else {
+            quote!(
+                {
+                    (
+                        #first
+                        #(#parse),*
+                    )
+                }
+            )
+        };
+
+        quote!(
+            if #peek {
+                #action
+            }
+        )
     }
 }
 
 impl Parse for Rule {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
         let mut items = Vec::default();
+        let mut action = None;
 
-        loop {
-            if input.is_empty() {
-                break;
-            }
+        while !input.is_empty() {
+            let item = input.parse::<Expr>()?;
+            items.push(item);
 
             if input.peek(syn::token::Brace) {
+                action = Some(input.parse::<Block>()?);
+                break;
+            } else if input.peek(Token![/])
+                || input.peek(kw::rule)
+                || (input.peek(Token![-]) && input.peek2(Token![-]))
+            {
                 break;
             }
-
-            items.push(input.parse()?);
         }
 
-        let map = if input.peek(syn::token::Brace) {
-            Some(input.parse()?)
+        Ok(Rule { items, action })
+    }
+}
+
+#[derive(Debug)]
+pub enum Expr {
+    Named { name: Ident, atom: Atom },
+    UnNamed { atom: Atom },
+    Not { atom: Atom },
+}
+
+impl Expr {
+    pub fn peek(&self) -> TokenStream {
+        match self {
+            Expr::Named { atom, .. } => atom.peek(),
+            Expr::Not { atom } => {
+                let peek = atom.peek();
+                quote!(!#peek)
+            }
+            Expr::UnNamed { atom } => atom.peek(),
+        }
+    }
+
+    pub fn peekn(&self, offset: usize) -> TokenStream {
+        match self {
+            Expr::Named { atom, .. } => atom.peekn(offset),
+            Expr::Not { atom } => {
+                let peek = atom.peekn(offset);
+                quote!(!#peek)
+            }
+            Expr::UnNamed { atom } => atom.peekn(offset),
+        }
+    }
+
+    pub fn atom(&self) -> &Atom {
+        match self {
+            Expr::Named { atom, .. } => atom,
+            Expr::Not { atom } => atom,
+            Expr::UnNamed { atom } => atom,
+        }
+    }
+
+    pub fn is_prec(&self) -> bool {
+        matches!(self.atom(), Atom::Prec)
+    }
+}
+
+impl Parse for Expr {
+    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+        let out = if input.peek(Token!(!)) {
+            let _ = input.parse::<Token![!]>()?;
+            Expr::Not {
+                atom: input.parse()?,
+            }
+        } else if input.peek(syn::Ident) && input.peek2(Token![:]) {
+            let name = input.parse()?;
+            let _ = input.parse::<Token![:]>()?;
+            Expr::Named {
+                name,
+                atom: input.parse()?,
+            }
         } else {
-            None
+            Expr::UnNamed {
+                atom: input.parse()?,
+            }
         };
 
-        Ok(Rule { items, map })
+        Ok(out)
     }
 }
 
-#[derive(Debug, Clone)]
-pub enum RuleItemKind {
+#[derive(Debug)]
+pub enum Atom {
     Prec,
     Parser { name: Ident },
-    Rule { rule: Rule },
-    Token { name: Token },
+    Token(AtomToken),
+    Rule(Vec<Rule>),
 }
 
-impl RuleItemKind {
-    pub fn to_parse(&self, prefix: bool) -> TokenStream {
+impl Atom {
+    pub fn peek(&self) -> TokenStream {
         match self {
-            RuleItemKind::Parser { name } => {
-                quote!(input.parse::<#name>()?)
+            Atom::Prec => panic!("cannot peek self"),
+            Atom::Parser { name } => quote!(input.peek::<#name>()),
+            Atom::Token(token) => quote!(input.peek::<#token>()),
+            Atom::Rule(rules) => {
+                let iter = rules.iter().map(|item| item.peek());
+                quote!(
+                    #(#iter)||*
+                )
             }
-            RuleItemKind::Prec => quote!(__expression(input, 0)?),
-            RuleItemKind::Rule { rule } => rule.parse_token(prefix),
-            RuleItemKind::Token { name } => {
-                quote!(input.parse::<#name>()?)
+        }
+    }
+
+    pub fn peekn(&self, offset: usize) -> TokenStream {
+        match self {
+            Atom::Prec => panic!("cannot peek self"),
+            Atom::Parser { name } => quote!(input.peek_offset::<#name>(#offset)),
+            Atom::Token(token) => quote!(input.peek_offset::<#token>(#offset)),
+            Atom::Rule(rules) => {
+                let iter = rules.iter().map(|item| item.peek());
+                quote!(
+                    #(#iter)||*
+                )
+            }
+        }
+    }
+
+    pub fn create_parse(&self, level: u8) -> TokenStream {
+        match self {
+            Atom::Prec => quote!(__expression(input, #level)?),
+            Atom::Parser { name } => quote!(input.parse::<#name>()?),
+            Atom::Token(token) => quote!(input.parse::<#token>()?),
+            Atom::Rule(rules) => {
+                let iter = rules.iter().map(|item| {
+                    let parse = item.build_parse(level);
+
+                    // quote!(
+                    //     if #peek {
+                    //         #parse
+                    //     }
+                    // )
+                    quote!(
+                        #parse
+                    )
+                });
+
+                let out = quote!(
+                    #(#iter)else*
+                    else {
+                        return Err(input.error("atom"))
+                    }
+                );
+
+                out
             }
         }
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct Token {
+impl Parse for Atom {
+    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+        let rule = if input.peek(Token![@]) {
+            let _ = input.parse::<Token![@]>()?;
+            Self::Prec
+        } else if input.peek(Ident) {
+            let name = input.parse::<Ident>()?;
+            Self::Parser { name }
+        } else if input.peek(syn::token::Paren) {
+            let group = input.parse::<Group>()?;
+
+            let rule =
+                Punctuated::<Rule, Token![/]>::parse_separated_nonempty.parse2(group.stream())?; //Precedence::parse.parse2(group.stream())?;
+
+            Self::Rule(rule.into_iter().collect())
+        } else if input.peek(LitStr) {
+            Self::Token(AtomToken {
+                name: input.parse()?,
+            })
+        } else {
+            return Err(input.error(format!("expected rule item: {:?}", input)));
+        };
+
+        Ok(rule)
+    }
+}
+
+#[derive(Debug)]
+pub struct AtomToken {
     pub name: LitStr,
 }
 
-impl ToTokens for Token {
+impl ToTokens for AtomToken {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let str = self.name.value();
-        if str.chars().all(|m| m.is_ascii_punctuation()) {
+        if str.chars().all(|m| {
+            m.is_ascii_punctuation()
+                && m != '('
+                && m != ')'
+                && m != '{'
+                && m != '}'
+                && m != '['
+                && m != ']'
+        }) {
             let mut puncts = Vec::new();
 
             let count = str.chars().count();
@@ -202,119 +451,5 @@ impl ToTokens for Token {
             quote!(Token![#str])
         }
         .to_tokens(tokens)
-    }
-}
-
-impl Parse for RuleItemKind {
-    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
-        let rule = if input.peek(Token![@]) {
-            let _ = input.parse::<Token![@]>()?;
-            RuleItemKind::Prec
-        } else if input.peek(Ident) {
-            let name = input.parse::<Ident>()?;
-            RuleItemKind::Parser { name }
-        } else if input.peek(Paren) {
-            let group = input.parse::<Group>()?;
-
-            let rule = Rule::parse.parse2(group.stream())?;
-
-            RuleItemKind::Rule { rule }
-        } else if input.peek(LitStr) {
-            RuleItemKind::Token {
-                name: Token {
-                    name: input.parse()?,
-                },
-            }
-        } else {
-            //println!("found: {:?}", input);
-            return Err(input.error(format!("expected rule item: {:?}", input)));
-        };
-
-        Ok(rule)
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct RuleItem {
-    pub kind: RuleItemKind,
-    pub name: Option<Ident>,
-    pub negation: bool,
-}
-
-impl RuleItem {
-    pub fn peek(&self) -> Option<TokenStream> {
-        match &self.kind {
-            RuleItemKind::Parser { name } => Some(quote!(input.peek::<#name>())),
-            RuleItemKind::Prec => None,
-            RuleItemKind::Rule { rule } => rule.peek(),
-            RuleItemKind::Token { name } => Some(quote!(input.peek::<#name>())),
-        }
-    }
-}
-
-impl Parse for RuleItem {
-    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
-        let name = if input.peek(syn::Ident::peek_any) && input.peek2(Token![:]) {
-            let name = input.parse::<Ident>()?;
-            let _ = input.parse::<Token![:]>()?;
-            Some(name)
-        } else {
-            None
-        };
-
-        let negation = if input.peek(Token![!]) {
-            let _ = input.parse::<Token![!]>();
-            true
-        } else {
-            false
-        };
-
-        let kind = input.parse()?;
-
-        Ok(RuleItem {
-            kind,
-            name,
-            negation,
-        })
-    }
-}
-
-pub struct MapBlock {
-    pub block: ExprBlock,
-}
-
-impl Parse for MapBlock {
-    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
-        Ok(MapBlock {
-            block: input.parse()?,
-        })
-    }
-}
-
-#[derive(Debug, Clone)]
-
-pub struct RuleGroup {
-    pub rules: Vec<Rule>,
-}
-
-impl Parse for RuleGroup {
-    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
-        let mut rules = Vec::default();
-
-        loop {
-            if input.is_empty() {
-                break;
-            }
-
-            let rule = input.parse::<Rule>()?;
-
-            rules.push(rule);
-
-            if input.peek(Token![-]) && input.peek2(Token![-]) {
-                break;
-            }
-        }
-
-        Ok(RuleGroup { rules })
     }
 }

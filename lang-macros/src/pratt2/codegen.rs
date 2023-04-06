@@ -1,19 +1,20 @@
 use proc_macro2::TokenStream;
-use quote::{format_ident, quote};
+use quote::quote;
 
 use crate::utils::lang_parsing;
 
-use super::parser::{Bundle, Rule, RuleEntry, RuleGroup};
+use super::parser::{Pratt, RuleGroup};
 
-pub fn run(bundle: Bundle) -> TokenStream {
+pub fn run(bundle: Pratt) -> TokenStream {
     let crate_name = lang_parsing();
 
-    let module_name = bundle.module;
+    let module_name = bundle.module_name;
     let return_type = bundle.return_type;
 
-    let precedence_list = build_precedence_list(&bundle.rule_list);
-    let prefix_fn = build_prefix(&bundle.rule_list);
-    let infix_fn = build_infix(&bundle.rule_list);
+    let peek = create_peek(&bundle.rules, true, true);
+    let precedence = build_precedence_list(&bundle.rules);
+    let prefix = build_rule_list(&bundle.rules, true);
+    let infix = build_rule_list(&bundle.rules, false);
 
     quote!(
 
@@ -22,23 +23,26 @@ pub fn run(bundle: Bundle) -> TokenStream {
             use super::*;
             use #crate_name::{parsing::{Parse, Peek, TokenReader, Cursor, Error}, lexing::{tokens::Token, WithSpan, Span}};
 
+            fn __peek<'input>(input: &mut Cursor<'input, '_, Token<'input>>) -> bool {
+                #peek
+            }
+
+
             fn __get_precedence<'input>(input: &mut TokenReader<'input, '_, Token<'input>>) -> u8 {
-                #precedence_list
+                #precedence
             }
 
             fn __prefix<'input>(input: &mut TokenReader<'input, '_, Token<'input>>) -> Result<#return_type, Error> {
-                #prefix_fn
-
+                #prefix
             }
 
             fn __infix<'input>(input: &mut TokenReader<'input, '_, Token<'input>>, left: #return_type) -> Result<#return_type, Error> {
-                 #infix_fn
+                 #infix
 
             }
 
             fn __expression<'input>(input: &mut TokenReader<'input, '_, Token<'input>>, precedence: u8) -> Result<#return_type, Error> {
                 let mut left = __prefix(input)?;
-
                 while precedence < __get_precedence(input) {
                     left = __infix(input, left)?;
                 }
@@ -56,24 +60,65 @@ pub fn run(bundle: Bundle) -> TokenStream {
                 }
             }
 
+            impl<'input> Peek<'input, Token<'input>> for #return_type {
+                fn peek(cursor: &mut Cursor<'input, '_, Token<'input>>) -> bool {
+                    __peek(cursor)
+                }
+            }
+
 
         }
 
     )
 }
 
+fn create_peek(groups: &[RuleGroup], prefix: bool, for_peek: bool) -> TokenStream {
+    let iter = groups
+        .iter()
+        .filter_map(|group| create_peek_for_group(group, prefix, for_peek))
+        .collect::<Vec<_>>();
+
+    quote!(
+        #(#iter)||*
+    )
+}
+
+fn create_peek_for_group(group: &RuleGroup, prefix: bool, for_peek: bool) -> Option<TokenStream> {
+    let iter = group
+        .rules
+        .iter()
+        .flat_map(|m| {
+            m.rules.iter().filter_map(|m| {
+                if (prefix && m.is_prefix()) || (!prefix && !m.is_prefix()) {
+                    if for_peek {
+                        Some(m.peek_prefix())
+                    } else {
+                        Some(m.peek())
+                    }
+                } else {
+                    None
+                }
+            })
+        })
+        .collect::<Vec<_>>();
+
+    if iter.is_empty() {
+        None
+    } else {
+        Some(quote!(
+            #(#iter)||*
+        ))
+    }
+}
+
 fn build_precedence_list(rules: &[RuleGroup]) -> TokenStream {
-    let list = rules.iter().enumerate().flat_map(|(idx, rules)| {
-        let level = rules
-            .rules
-            .iter()
-            .filter(|item| !item.is_prefix())
-            .filter_map(move |item| item.peek());
+    let list = rules.iter().enumerate().filter_map(|(idx, group)| {
+        let level = create_peek_for_group(group, false, false)?;
 
         let prec = idx as u8 + 1;
 
         Some(quote!(
-            if #(#level)||* {
+            if #level {
                 #prec
             }
         ))
@@ -87,92 +132,60 @@ fn build_precedence_list(rules: &[RuleGroup]) -> TokenStream {
     )
 }
 
-impl Rule {
-    pub fn parse_token(&self, prefix: bool) -> TokenStream {
-        let peek = self.peek().expect("peek");
+fn build_rule_list(rules: &[RuleGroup], prefix: bool) -> TokenStream {
+    let output = rules
+        .iter()
+        .enumerate()
+        .filter_map(|(idx, group)| build_rule(group, prefix, (idx + 1) as u8))
+        .collect::<Vec<_>>();
 
-        let mut names = vec![];
-        let mut values = vec![];
-        let skip = if prefix { 0 } else { 1 };
-        self.items.iter().skip(skip).for_each(|entry| match entry {
-            RuleEntry::Alternatives(s) => {
-                let iter = s.iter().map(|m| {
-                    let peek = m.peek();
-                    let name = m
-                        .name
-                        .as_ref()
-                        .map(|m| quote!(#m))
-                        .unwrap_or_else(|| quote!(_));
-                    let parse = m.kind.to_parse(prefix);
-                    quote!(
-                        if #peek {
-                            let #name = #parse?;
-                        }
-                    )
-                });
+    let error = if prefix { "prefix" } else { "infix" };
 
-                names.push(quote!(_));
-                values.push(quote!(
-                    #(#iter)else*
-                    else {
-                        panic!("alternative")
-                    }
-                ));
-            }
-            RuleEntry::Single(s) => {
-                let name = s
-                    .name
-                    .as_ref()
-                    .map(|m| quote!(#m))
-                    .unwrap_or_else(|| quote!(_));
-                names.push(name);
-                values.push(s.kind.to_parse(prefix));
-            }
-        });
-
-        let map = self
-            .map
-            .as_ref()
-            .map(|m| quote!(#m))
-            .unwrap_or_else(|| quote!({}));
-
+    if output.is_empty() {
+        quote!(Err(input.error("no prefix")))
+    } else {
         quote!(
-            if #peek {
-                let (#(#names),*) = (#(#values),*);
-                #map
+            #(#output)else*
+            else {
+                return Err(input.error(#error))
             }
         )
     }
 }
 
-fn build_prefix(rules: &[RuleGroup]) -> TokenStream {
-    let rules = rules.iter().flat_map(|rule| {
-        rule.rules
-            .iter()
-            .filter(|rule| rule.is_prefix())
-            .map(|rule| rule.parse_token(true))
-    });
+fn build_rule(group: &RuleGroup, prefix: bool, level: u8) -> Option<TokenStream> {
+    let output = group
+        .rules
+        .iter()
+        .filter_map(|m| {
+            let rules = m
+                .rules
+                .iter()
+                .filter_map(|m| {
+                    if (prefix && m.is_prefix()) || (!prefix && !m.is_prefix()) {
+                        Some(m.build_parse(level))
+                    } else {
+                        None
+                    }
+                })
+                .collect::<Vec<_>>();
 
-    quote!(
-        #(#rules)else*
-        else {
-            panic!("")
-        }
-    )
-}
+            if rules.is_empty() {
+                None
+            } else {
+                Some(quote!(
+                    #(#rules)else*
+                ))
+            }
+        })
+        .collect::<Vec<_>>();
 
-fn build_infix(rules: &[RuleGroup]) -> TokenStream {
-    let rules = rules.iter().flat_map(|rule| {
-        rule.rules
-            .iter()
-            .filter(|rule| !rule.is_prefix())
-            .map(|rule| rule.parse_token(false))
-    });
+    if output.is_empty() {
+        None
+    } else {
+        Some(quote!(
+            #(#output)else*
 
-    quote!(
-        #(#rules)else*
-        else {
-            panic!("")
-        }
-    )
+        ))
+    }
 }

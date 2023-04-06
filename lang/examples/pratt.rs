@@ -17,7 +17,9 @@ pub mod tokens {
             "{" OpenBrace,
             "}" CloseBrace,
             "," Comma,
-            "=" Assign
+            "=" Assign,
+            ":" Colon,
+            "?" Question
 
         }
         keywords {
@@ -38,6 +40,13 @@ pub enum BinaryOperator {
 }
 
 #[derive(Debug, Clone)]
+pub struct Tenary<'a> {
+    expr: Box<Expr<'a>>,
+    cons: Box<Expr<'a>>,
+    alt: Box<Expr<'a>>,
+}
+
+#[derive(Debug, Clone)]
 pub enum Expr<'a> {
     Lit(Literal<'a>),
     Binary {
@@ -46,9 +55,10 @@ pub enum Expr<'a> {
         op: BinaryOperator,
     },
     Ident(Ident<'a>),
+    Tenary(Tenary<'a>),
 }
 
-lang::precedence3! {
+lang::precedence! {
     expression -> Expr<'input>
     rule lhs:@ "=" !"=" rhs:@ {
         Ok(Expr::Binary {
@@ -56,6 +66,13 @@ lang::precedence3! {
             right: Box::new(rhs),
             op: BinaryOperator::Assign
         })
+    }
+    rule expr:@ "?" cons:@ ":" alt:@ {
+        Ok(Expr::Tenary(Tenary {
+            expr: Box::new(expr),
+            cons: Box::new(cons),
+            alt: Box::new(alt)
+        }))
     }
     --
     rule lhs:@ "==" rhs:@ {
@@ -83,6 +100,9 @@ lang::precedence3! {
     }
 
     --
+    rule "(" e:@ ")" {
+        Ok(e)
+    }
     rule o:Literal {
         Ok(Expr::Lit(o))
     } / i:Ident {
@@ -92,7 +112,7 @@ lang::precedence3! {
 }
 
 fn main() {
-    let input = "ident = 20 - 100 / 2 == 202";
+    let input = "ident = 20 - 100 / 2 == 202 ? true : false";
 
     let lexer = tokens::Lexer::new(input);
 

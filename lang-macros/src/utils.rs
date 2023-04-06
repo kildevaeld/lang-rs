@@ -17,10 +17,7 @@ pub fn lang_parsing() -> Ident {
                 Ident::new("crate", Span::call_site())
             }
         }
-        FoundCrate::Name(name) => {
-            let ident = Ident::new(&name, Span::call_site());
-            ident
-        }
+        FoundCrate::Name(name) => Ident::new(&name, Span::call_site()),
     }
 }
 
@@ -30,10 +27,7 @@ pub fn serde_crate() -> Ident {
 
     match found_crate {
         FoundCrate::Itself => Ident::new("serde", Span::call_site()),
-        FoundCrate::Name(name) => {
-            let ident = Ident::new(&name, Span::call_site());
-            ident
-        }
+        FoundCrate::Name(name) => Ident::new(&name, Span::call_site()),
     }
 }
 
