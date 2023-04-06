@@ -127,6 +127,30 @@ impl Rule {
 
         let iter = iter
             .take_while(|item| !item.is_prec())
+            .enumerate()
+            .map(|(idx, item)| item.peekn(idx))
+            .collect::<Vec<_>>();
+
+        if iter.len() == 1 {
+            quote!(
+               #(#iter)&&*
+            )
+        } else {
+            quote!(
+               ( #(#iter)&&*)
+            )
+        }
+    }
+
+    pub fn peek_prefix(&self) -> TokenStream {
+        let iter: Box<dyn Iterator<Item = _>> = if self.is_prefix() {
+            Box::new(self.items.iter())
+        } else {
+            Box::new(self.items.iter().skip_while(|item| item.is_prec()))
+        };
+
+        let iter = iter
+            .take_while(|item| !item.is_prec())
             .map(|item| item.peek())
             .collect::<Vec<_>>();
 
@@ -154,13 +178,13 @@ impl Rule {
                 Expr::Named { name, atom } => {
                     let parse = atom.create_parse(level);
                     Some(quote!(
-                        let #name = #parse?;
+                        let #name = #parse;
                     ))
                 }
                 Expr::UnNamed { atom } => {
                     let parse = atom.create_parse(level);
                     Some(quote!(
-                        let _ = #parse?;
+                        let _ = #parse;
                     ))
                 }
                 Expr::Not { .. } => None,
@@ -170,7 +194,7 @@ impl Rule {
 
         let first = if !self.is_prefix() {
             let first = self.items.first().expect("first item");
-            if let Expr::Named { name, atom } = first {
+            if let Expr::Named { name, .. } = first {
                 Some(quote!(
                     let #name = left;
                 ))
@@ -249,6 +273,17 @@ impl Expr {
         }
     }
 
+    pub fn peekn(&self, offset: usize) -> TokenStream {
+        match self {
+            Expr::Named { atom, .. } => atom.peekn(offset),
+            Expr::Not { atom } => {
+                let peek = atom.peekn(offset);
+                quote!(!#peek)
+            }
+            Expr::UnNamed { atom } => atom.peekn(offset),
+        }
+    }
+
     pub fn atom(&self) -> &Atom {
         match self {
             Expr::Named { atom, .. } => atom,
@@ -258,10 +293,7 @@ impl Expr {
     }
 
     pub fn is_prec(&self) -> bool {
-        match self.atom() {
-            Atom::Prec => true,
-            _ => false,
-        }
+        matches!(self.atom(), Atom::Prec)
     }
 }
 
@@ -312,25 +344,47 @@ impl Atom {
         }
     }
 
+    pub fn peekn(&self, offset: usize) -> TokenStream {
+        match self {
+            Atom::Prec => panic!("cannot peek self"),
+            Atom::Parser { name } => quote!(input.peek_offset::<#name>(#offset)),
+            Atom::Token(token) => quote!(input.peek_offset::<#token>(#offset)),
+            Atom::Rule(rules) => {
+                let iter = rules.iter().map(|item| item.peek());
+                quote!(
+                    #(#iter)||*
+                )
+            }
+        }
+    }
+
     pub fn create_parse(&self, level: u8) -> TokenStream {
         match self {
-            Atom::Prec => quote!(__expression(input, #level)),
-            Atom::Parser { name } => quote!(input.parse::<#name>()),
-            Atom::Token(token) => quote!(input.parse::<#token>()),
+            Atom::Prec => quote!(__expression(input, #level)?),
+            Atom::Parser { name } => quote!(input.parse::<#name>()?),
+            Atom::Token(token) => quote!(input.parse::<#token>()?),
             Atom::Rule(rules) => {
                 let iter = rules.iter().map(|item| {
-                    let peek = item.peek();
                     let parse = item.build_parse(level);
 
+                    // quote!(
+                    //     if #peek {
+                    //         #parse
+                    //     }
+                    // )
                     quote!(
-                        if #peek {
-                            #parse
-                        }
+                        #parse
                     )
                 });
-                quote!(
+
+                let out = quote!(
                     #(#iter)else*
-                )
+                    else {
+                        panic!("")
+                    }
+                );
+
+                out
             }
         }
     }

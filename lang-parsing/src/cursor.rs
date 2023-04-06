@@ -1,5 +1,5 @@
 use super::error::Error;
-use crate::ErrorKind;
+use crate::{ErrorKind, Peek};
 use alloc::vec::Vec;
 use lang_lexing::{Span, TokenRef, WithSpan};
 
@@ -78,5 +78,9 @@ impl<'a, 'b, T> Cursor<'a, 'b, T> {
             }
             _ => None,
         }
+    }
+
+    pub fn peek<P: Peek<'a, T>>(&mut self) -> bool {
+        P::peek(self)
     }
 }

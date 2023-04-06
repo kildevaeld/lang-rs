@@ -11,6 +11,7 @@ pub mod tokens {
             "-" Sub,
             "*" Mul,
             "/" Div,
+            "==" Equal,
             "(" OpenParens,
             ")" CloseParens,
             "{" OpenBrace,
@@ -31,7 +32,9 @@ pub enum BinaryOperator {
     Sub,
     Add,
     Div,
+    Mul,
     Assign,
+    Eq,
 }
 
 #[derive(Debug, Clone)]
@@ -51,10 +54,18 @@ lang::precedence3! {
         Ok(Expr::Binary {
             left: Box::new(lhs),
             right: Box::new(rhs),
-            op: BinaryOperator::Add
+            op: BinaryOperator::Assign
         })
     }
-     --
+    --
+    rule lhs:@ "==" rhs:@ {
+        Ok(Expr::Binary {
+            left: Box::new(lhs),
+            right: Box::new(rhs),
+            op: BinaryOperator::Eq
+        })
+    }
+    --
     rule lhs:@ op:("+" { BinaryOperator::Add } / "-" { BinaryOperator::Sub }) rhs:@ {
         Ok(Expr::Binary {
             left: Box::new(lhs),
@@ -62,6 +73,15 @@ lang::precedence3! {
             op
         })
     }
+    --
+    rule lhs:@ op:("/" { BinaryOperator::Div } / "*" { BinaryOperator::Mul }) rhs:@ {
+        Ok(Expr::Binary {
+            left: Box::new(lhs),
+            right: Box::new(rhs),
+            op
+        })
+    }
+
     --
     rule o:Literal {
         Ok(Expr::Lit(o))
@@ -72,10 +92,14 @@ lang::precedence3! {
 }
 
 fn main() {
-    let input = "20 - 100 / 2";
+    let input = "ident = 20 - 100 / 2 == 202";
 
     let lexer = tokens::Lexer::new(input);
 
     let mut parser =
         Parser::from_tokens(input, lexer.skip_whitespace(true).tokenize()).expect("lex");
+
+    let ast = parser.parse::<Expr>().expect("message");
+
+    println!("{:#?}", ast)
 }

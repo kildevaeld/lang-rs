@@ -11,7 +11,7 @@ pub fn run(bundle: Pratt) -> TokenStream {
     let module_name = bundle.module_name;
     let return_type = bundle.return_type;
 
-    let peek = create_peek(&bundle.rules, true);
+    let peek = create_peek(&bundle.rules, true, true);
     let precedence = build_precedence_list(&bundle.rules);
     let prefix = build_rule_list(&bundle.rules, true);
     let infix = build_rule_list(&bundle.rules, false);
@@ -43,7 +43,6 @@ pub fn run(bundle: Pratt) -> TokenStream {
 
             fn __expression<'input>(input: &mut TokenReader<'input, '_, Token<'input>>, precedence: u8) -> Result<#return_type, Error> {
                 let mut left = __prefix(input)?;
-
                 while precedence < __get_precedence(input) {
                     left = __infix(input, left)?;
                 }
@@ -73,10 +72,10 @@ pub fn run(bundle: Pratt) -> TokenStream {
     )
 }
 
-fn create_peek(groups: &[RuleGroup], prefix: bool) -> TokenStream {
+fn create_peek(groups: &[RuleGroup], prefix: bool, for_peek: bool) -> TokenStream {
     let iter = groups
         .iter()
-        .filter_map(|group| create_peek_for_group(group, prefix))
+        .filter_map(|group| create_peek_for_group(group, prefix, for_peek))
         .collect::<Vec<_>>();
 
     quote!(
@@ -84,14 +83,18 @@ fn create_peek(groups: &[RuleGroup], prefix: bool) -> TokenStream {
     )
 }
 
-fn create_peek_for_group(group: &RuleGroup, prefix: bool) -> Option<TokenStream> {
+fn create_peek_for_group(group: &RuleGroup, prefix: bool, for_peek: bool) -> Option<TokenStream> {
     let iter = group
         .rules
         .iter()
         .flat_map(|m| {
             m.rules.iter().filter_map(|m| {
                 if (prefix && m.is_prefix()) || (!prefix && !m.is_prefix()) {
-                    Some(m.peek())
+                    if for_peek {
+                        Some(m.peek_prefix())
+                    } else {
+                        Some(m.peek())
+                    }
                 } else {
                     None
                 }
@@ -110,7 +113,7 @@ fn create_peek_for_group(group: &RuleGroup, prefix: bool) -> Option<TokenStream>
 
 fn build_precedence_list(rules: &[RuleGroup]) -> TokenStream {
     let list = rules.iter().enumerate().filter_map(|(idx, group)| {
-        let level = create_peek_for_group(group, false)?;
+        let level = create_peek_for_group(group, false, false)?;
 
         let prec = idx as u8 + 1;
 
@@ -133,7 +136,7 @@ fn build_rule_list(rules: &[RuleGroup], prefix: bool) -> TokenStream {
     let output = rules
         .iter()
         .enumerate()
-        .filter_map(|(idx, group)| build_rule(group, prefix, idx as u8))
+        .filter_map(|(idx, group)| build_rule(group, prefix, (idx + 1) as u8))
         .collect::<Vec<_>>();
 
     if output.is_empty() {
@@ -142,7 +145,7 @@ fn build_rule_list(rules: &[RuleGroup], prefix: bool) -> TokenStream {
         quote!(
             #(#output)else*
             else {
-                Err(input.error("invalid prefix"))
+                panic!("")
             }
         )
     }
@@ -180,9 +183,7 @@ fn build_rule(group: &RuleGroup, prefix: bool, level: u8) -> Option<TokenStream>
     } else {
         Some(quote!(
             #(#output)else*
-            else {
-                panic!("something")
-            }
+
         ))
     }
 }
