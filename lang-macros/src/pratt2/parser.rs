@@ -119,17 +119,19 @@ pub struct Rule {
 
 impl Rule {
     pub fn peek(&self) -> TokenStream {
-        let iter: Box<dyn Iterator<Item = _>> = if self.is_prefix() {
+        let mut iter: Box<dyn Iterator<Item = _>> = if self.is_prefix() {
             Box::new(self.items.iter())
         } else {
             Box::new(self.items.iter().skip_while(|item| item.is_prec()))
         };
+        let first = iter.next().map(|m| m.peek()).into_iter();
 
         let iter = iter
-            .take_while(|item| !item.is_prec())
+            .take_while(|item| item.atom().is_token())
             .enumerate()
-            .map(|(idx, item)| item.peekn(idx))
-            .collect::<Vec<_>>();
+            .map(|(idx, item)| item.peekn(idx + 1));
+
+        let iter = first.chain(iter).collect::<Vec<_>>();
 
         if iter.len() == 1 {
             quote!(
@@ -330,6 +332,10 @@ pub enum Atom {
 }
 
 impl Atom {
+    pub fn is_token(&self) -> bool {
+        matches!(self, Atom::Token(_))
+    }
+
     pub fn peek(&self) -> TokenStream {
         match self {
             Atom::Prec => panic!("cannot peek self"),
