@@ -41,9 +41,9 @@ pub enum BinaryOperator {
 
 #[derive(Debug, Clone)]
 pub struct Tenary<'a> {
-    expr: Box<Expr<'a>>,
-    cons: Box<Expr<'a>>,
-    alt: Box<Expr<'a>>,
+    pub expr: Box<Expr<'a>>,
+    pub cons: Box<Expr<'a>>,
+    pub alt: Box<Expr<'a>>,
 }
 
 #[derive(Debug, Clone)]
@@ -58,7 +58,7 @@ pub enum Expr<'a> {
     Tenary(Tenary<'a>),
 }
 
-lang::precedence! {
+lang::precedence2! {
     expression -> Expr<'input>
     rule lhs:@ "=" !"=" rhs:@ {
         Ok(Expr::Binary {
