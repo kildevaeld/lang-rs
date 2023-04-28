@@ -1,5 +1,5 @@
 use super::{
-    whitespace::Whitespace, Comment, Ident, Literal, LiteralNumber, LiteralString,
+    whitespace::Whitespace, Comment, Ident, Literal, LiteralBinary, LiteralNumber, LiteralString,
     MultilineComment, Punct, SinglelineComment,
 };
 use crate::{Lexer, LexerFactory, Span, TokenRef, WithSpan};
@@ -42,6 +42,7 @@ impl<'a> LexerFactory<'a, Token<'a>> for Token<'a> {
         SinglelineComment,
         LiteralNumber,
         // LiteralBool,
+        LiteralBinary,
         LiteralString,
         Ident<'a>,
         Punct<'a>,

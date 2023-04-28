@@ -7,6 +7,7 @@ pub enum LiteralType<'a> {
     Integer,
     Float,
     Bool,
+    Binary,
     Custom(alloc::borrow::Cow<'a, str>),
 }
 
