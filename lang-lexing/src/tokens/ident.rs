@@ -1,4 +1,4 @@
-use crate::{cursor::ChildCursor, Error, Extract, Result, Span, WithSpan};
+use crate::{cursor::ChildCursor, string_ext::StringExt, Error, Extract, Result, Span, WithSpan};
 
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -17,14 +17,21 @@ impl<'a, T: From<Self>> Extract<'a, T> for Ident<'a> {
         let mut last_span = pos;
 
         while let Some((next_span, next_token)) = cursor.peek() {
-            if !next_token.chars().all(|m| m.is_alphanumeric() || m == '_') {
+            if next_token.is_ascii_whitespace() || next_token.is_ascii_punctuation() {
+                last_span = next_span;
                 break;
             }
+            if !next_token
+                .chars()
+                .all(|m| m.is_ascii_alphanumeric() || m == '_')
+            {
+                return Err(Error::new(pos, "identifier"));
+            }
             let _ = cursor.next();
-            last_span = next_span + next_token.len() - 1;
+            last_span = next_span + next_token.len();
         }
 
-        let span = Span::new(pos, last_span + 1);
+        let span = Span::new(pos, last_span);
 
         let lexeme = span
             .slice(cursor.input())
