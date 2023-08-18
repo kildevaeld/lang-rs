@@ -21,10 +21,10 @@ impl<'a, T: From<Self>> Extract<'a, T> for Ident<'a> {
                 break;
             }
             let _ = cursor.next();
-            last_span = next_span + next_token.len();
+            last_span = next_span + next_token.len() - 1;
         }
 
-        let span = Span::new(pos, last_span);
+        let span = Span::new(pos, last_span + 1);
 
         let lexeme = span
             .slice(cursor.input())
