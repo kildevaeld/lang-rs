@@ -54,7 +54,7 @@ fn main() {
         let fib = create_fib(*ctx);
 
         let ret = ctx
-            .call(Callable::Closure(fib), &[Value::Integer(20)])
+            .call(Callable::Closure(fib), &[Value::Integer(30)])
             .unwrap();
 
         println!("value {:?}", ret);
