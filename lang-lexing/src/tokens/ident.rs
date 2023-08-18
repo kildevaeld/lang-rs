@@ -17,14 +17,13 @@ impl<'a, T: From<Self>> Extract<'a, T> for Ident<'a> {
         let mut last_span = pos;
 
         while let Some((next_span, next_token)) = cursor.peek() {
-            if next_token.is_ascii_whitespace() || next_token.is_ascii_punctuation() {
+            if next_token.is_ascii_whitespace()
+                || (next_token.is_ascii_punctuation() && next_token != "_")
+            {
                 last_span = next_span;
                 break;
             }
-            if !next_token
-                .chars()
-                .all(|m| m.is_ascii_alphanumeric() || m == '_')
-            {
+            if !next_token.chars().all(|m| m.is_alphanumeric() || m == '_') {
                 return Err(Error::new(pos, "identifier"));
             }
             let _ = cursor.next();
