@@ -7,17 +7,17 @@ use lang_lexing::{TokenRef, WithSpan};
 pub struct TokenReader<'a, 'b, T> {
     pub(crate) input: &'a str,
     pub(crate) tokens: &'b Vec<T>,
-    pub(crate) current: usize,
+    pub(crate) current: &'b mut usize,
 }
-impl<'a, 'b, T> Clone for TokenReader<'a, 'b, T> {
-    fn clone(&self) -> Self {
-        TokenReader {
-            input: self.input,
-            tokens: self.tokens,
-            current: self.current,
-        }
-    }
-}
+// impl<'a, 'b, T> Clone for TokenReader<'a, 'b, T> {
+//     fn clone(&self) -> Self {
+//         TokenReader {
+//             input: self.input,
+//             tokens: self.tokens,
+//             current: self.current,
+//         }
+//     }
+// }
 
 impl<'a, 'b, T> TokenReader<'a, 'b, T> {
     pub fn input(&self) -> &'a str {
@@ -25,11 +25,11 @@ impl<'a, 'b, T> TokenReader<'a, 'b, T> {
     }
 
     pub fn is_empty(&self) -> bool {
-        self.current >= self.tokens.len()
+        *self.current >= self.tokens.len()
     }
 
     pub fn current(&self) -> Option<&T> {
-        self.tokens.get(self.current)
+        self.tokens.get(*self.current)
     }
 
     /// Try to parse.
@@ -50,12 +50,15 @@ impl<'a, 'b, T> TokenReader<'a, 'b, T> {
     }
 
     pub fn peek_offset<P: Peek<'a, T>>(&self, offset: usize) -> bool {
-        let mut cursor = TokenReader {
+        if offset >= self.tokens.len() {
+            return false;
+        }
+
+        P::peek(TokenReader {
             input: self.input,
             tokens: self.tokens,
-            current: self.current + offset,
-        };
-        P::peek(&mut cursor)
+            current: &mut (*self.current + offset),
+        })
     }
 
     pub fn peek_while<P: Peek<'a, T>, N: Peek<'a, T>>(&mut self) -> bool {
@@ -96,10 +99,10 @@ impl<'a, 'b, T> TokenReader<'a, 'b, T> {
     where
         F: FnOnce(&T) -> Option<R>,
     {
-        match self.tokens.get(self.current) {
+        match self.tokens.get(*self.current) {
             Some(found) => {
                 if let Some(ret) = func(found) {
-                    self.current += 1;
+                    *self.current += 1;
                     Some(ret)
                 } else {
                     None
@@ -111,33 +114,33 @@ impl<'a, 'b, T> TokenReader<'a, 'b, T> {
 
     pub fn step<F, R>(&mut self, func: F) -> Result<R, Error>
     where
-        F: FnMut(&mut TokenReader<'a, '_, T>) -> Result<R, Error>,
+        F: FnMut(TokenReader<'a, '_, T>) -> Result<R, Error>,
     {
         self.child::<F, R>(func)
     }
 
     fn child<F, R>(&mut self, mut func: F) -> Result<R, Error>
     where
-        F: FnMut(&mut TokenReader<'a, '_, T>) -> Result<R, Error>,
+        F: FnMut(TokenReader<'a, '_, T>) -> Result<R, Error>,
     {
-        let mut child = TokenReader {
+        let mut child_idx = *self.current;
+
+        match func(TokenReader {
             input: self.input,
             tokens: self.tokens,
-            current: self.current,
-        };
-
-        match func(&mut child) {
+            current: &mut child_idx,
+        }) {
             Ok(ret) => {
-                self.current = child.current;
+                *self.current = child_idx;
                 Ok(ret)
             }
             e => e,
         }
     }
 
-    pub fn offset(&self, offset: isize) -> Result<TokenReader<'a, 'b, T>, Error> {
+    pub fn offset(&self, offset: isize) -> Option<&T> {
         let len = self.tokens.len() as isize;
-        let idx = self.current as isize;
+        let idx = *self.current as isize;
         let new_idx = idx + offset;
         let new_idx = if new_idx < 0 {
             0
@@ -147,11 +150,7 @@ impl<'a, 'b, T> TokenReader<'a, 'b, T> {
             new_idx as usize
         };
 
-        Ok(TokenReader {
-            input: self.input,
-            tokens: self.tokens,
-            current: new_idx,
-        })
+        Some(&self.tokens[new_idx])
     }
 
     pub fn error(&self, error: impl Into<ErrorKind>) -> Error
@@ -160,7 +159,7 @@ impl<'a, 'b, T> TokenReader<'a, 'b, T> {
     {
         let span = self
             .tokens
-            .get(self.current)
+            .get(*self.current)
             .map(|token| token.span())
             .unwrap_or_default();
 

@@ -14,7 +14,7 @@ impl<'a, O, T, C, TOKEN> Peek<'a, TOKEN> for Group<O, T, C>
 where
     O: Peek<'a, TOKEN>,
 {
-    fn peek(cursor: &mut crate::TokenReader<'a, '_, TOKEN>) -> bool {
+    fn peek(cursor: crate::TokenReader<'a, '_, TOKEN>) -> bool {
         O::peek(cursor)
     }
 }
@@ -25,7 +25,7 @@ where
     T: Parse<'a, TOKEN>,
     C: Parse<'a, TOKEN>,
 {
-    fn parse(state: &mut crate::TokenReader<'a, '_, TOKEN>) -> Result<Self, crate::Error> {
+    fn parse(mut state: crate::TokenReader<'a, '_, TOKEN>) -> Result<Self, crate::Error> {
         Ok(Group {
             open_token: state.parse()?,
             value: state.parse()?,

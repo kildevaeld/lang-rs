@@ -55,14 +55,14 @@ pub fn run(bundle: Pratt) -> TokenStream {
             }
 
             impl<'input> Parse<'input, Token<'input>> for #return_type {
-                fn parse(input: &mut TokenReader<'input, '_, Token<'input>>) -> Result<#return_type, Error> {
-                    parse(input)
+                fn parse(mut input: TokenReader<'input, '_, Token<'input>>) -> Result<#return_type, Error> {
+                    parse(&mut input)
                 }
             }
 
             impl<'input> Peek<'input, Token<'input>> for #return_type {
-                fn peek(cursor: &mut TokenReader<'input, '_, Token<'input>>) -> bool {
-                    __peek(cursor)
+                fn peek(mut cursor: TokenReader<'input, '_, Token<'input>>) -> bool {
+                    __peek(&mut cursor)
                 }
             }
 

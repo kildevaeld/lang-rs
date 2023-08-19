@@ -5,7 +5,7 @@ use alloc::boxed::Box;
 pub trait Parse<'a, T>: Sized {
     /// Parse self from a token reader
     /// if this fails, the reader can be in an invalid state
-    fn parse(state: &mut TokenReader<'a, '_, T>) -> Result<Self, Error>;
+    fn parse(state: TokenReader<'a, '_, T>) -> Result<Self, Error>;
 }
 
 pub trait Rule {
@@ -22,13 +22,13 @@ macro_rules! parse_impl {
     ($first: ident) => {
 
         impl<'a, T, $first: Peek<'a, T>> Peek<'a, T> for ($first, ) {
-            fn peek(cursor: &mut TokenReader<'a, '_, T>) -> bool {
+            fn peek(cursor: TokenReader<'a, '_, T>) -> bool {
                 $first::peek(cursor)
             }
         }
 
         impl<'a, T, $first: Parse<'a, T>> Parse<'a, T> for ($first,) {
-            fn parse(state: &mut TokenReader<'a, '_, T>) -> Result<($first,), Error> {
+            fn parse(mut state: TokenReader<'a, '_, T>) -> Result<($first,), Error> {
                 Ok((
                     state.parse()?,
                 ))
@@ -39,14 +39,14 @@ macro_rules! parse_impl {
         parse_impl!($($rest)*);
 
         impl<'a, T, $first: Peek<'a, T>, $($rest),*> Peek<'a, T> for ($first, $($rest),*) {
-            fn peek(cursor: &mut TokenReader<'a, '_, T>) -> bool {
+            fn peek(cursor: TokenReader<'a, '_, T>) -> bool {
                 $first::peek(cursor)
             }
         }
 
         impl<'a, T, $first: Parse<'a, T>, $($rest: Parse<'a, T>),*> Parse<'a, T> for ($first, $($rest),*) {
 
-            fn parse(state: &mut TokenReader<'a, '_, T>) -> Result<($first, $($rest),*), Error> {
+            fn parse(mut state: TokenReader<'a, '_, T>) -> Result<($first, $($rest),*), Error> {
                 Ok((
                     state.parse()?,
                     $(state.parse::<$rest>()?),*
@@ -62,7 +62,7 @@ impl<'a, T, TOKEN> Parse<'a, TOKEN> for Option<T>
 where
     T: Parse<'a, TOKEN>,
 {
-    fn parse(state: &mut TokenReader<'a, '_, TOKEN>) -> Result<Self, Error> {
+    fn parse(mut state: TokenReader<'a, '_, TOKEN>) -> Result<Self, Error> {
         match state.parse::<T>() {
             Ok(ret) => Ok(Some(ret)),
             Err(_) => Ok(None),
@@ -74,7 +74,7 @@ impl<'a, T, TOKEN> Peek<'a, TOKEN> for Option<T>
 where
     T: Peek<'a, TOKEN>,
 {
-    fn peek(_cursor: &mut TokenReader<'a, '_, TOKEN>) -> bool {
+    fn peek(_cursor: TokenReader<'a, '_, TOKEN>) -> bool {
         true
     }
 }
@@ -87,7 +87,7 @@ where
     T: lang_lexing::WithSpan,
 {
     #[allow(non_snake_case)]
-    fn parse(state: &mut TokenReader<'a, '_, T>) -> Result<Self, Error> {
+    fn parse(mut state: TokenReader<'a, '_, T>) -> Result<Self, Error> {
         use alloc::vec;
         use either::Either;
         any_of!(state,
@@ -104,8 +104,8 @@ where
     R: Peek<'a, T>,
     T: lang_lexing::WithSpan,
 {
-    fn peek(cursor: &mut TokenReader<'a, '_, T>) -> bool {
-        L::peek(cursor) || R::peek(cursor)
+    fn peek(cursor: TokenReader<'a, '_, T>) -> bool {
+        cursor.peek::<L>() || cursor.peek::<R>()
     }
 }
 
@@ -113,7 +113,7 @@ impl<'a, T, TOKEN> Parse<'a, TOKEN> for Box<T>
 where
     T: Parse<'a, TOKEN>,
 {
-    fn parse(state: &mut TokenReader<'a, '_, TOKEN>) -> Result<Self, Error> {
+    fn parse(state: TokenReader<'a, '_, TOKEN>) -> Result<Self, Error> {
         Ok(Box::new(T::parse(state)?))
     }
 }
@@ -122,7 +122,7 @@ impl<'a, T, TOKEN> Peek<'a, TOKEN> for Box<T>
 where
     T: Peek<'a, TOKEN>,
 {
-    fn peek(cursor: &mut TokenReader<'a, '_, TOKEN>) -> bool {
+    fn peek(cursor: TokenReader<'a, '_, TOKEN>) -> bool {
         T::peek(cursor)
     }
 }
@@ -131,7 +131,7 @@ impl<'a, T, TOKEN> Peek<'a, TOKEN> for alloc::vec::Vec<T>
 where
     T: Peek<'a, TOKEN>,
 {
-    fn peek(cursor: &mut TokenReader<'a, '_, TOKEN>) -> bool {
+    fn peek(cursor: TokenReader<'a, '_, TOKEN>) -> bool {
         T::peek(cursor)
     }
 }
@@ -140,7 +140,7 @@ impl<'a, T, TOKEN> Parse<'a, TOKEN> for alloc::vec::Vec<T>
 where
     T: Parse<'a, TOKEN> + Peek<'a, TOKEN>,
 {
-    fn parse(state: &mut TokenReader<'a, '_, TOKEN>) -> Result<Self, Error> {
+    fn parse(mut state: TokenReader<'a, '_, TOKEN>) -> Result<Self, Error> {
         let mut output = alloc::vec::Vec::new();
 
         loop {

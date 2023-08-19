@@ -3,5 +3,5 @@
 use crate::TokenReader;
 
 pub trait Peek<'a, T> {
-    fn peek(cursor: &mut TokenReader<'a, '_, T>) -> bool;
+    fn peek(cursor: TokenReader<'a, '_, T>) -> bool;
 }

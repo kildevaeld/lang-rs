@@ -39,14 +39,6 @@ impl<'a, T> Parser<'a, T> {
         self.input
     }
 
-    pub fn reader<'b>(&'b mut self) -> TokenReader<'a, 'b, T> {
-        TokenReader {
-            input: self.input,
-            tokens: &self.stream,
-            current: self.current,
-        }
-    }
-
     pub fn is_empty(&self) -> bool {
         self.current >= self.stream.len()
     }
@@ -55,15 +47,15 @@ impl<'a, T> Parser<'a, T> {
     where
         P: Parse<'a, T>,
     {
-        let mut cursor = TokenReader {
+        let mut child_idx = self.current;
+
+        match P::parse(TokenReader {
             input: self.input,
             tokens: &self.stream,
-            current: self.current,
-        };
-
-        match P::parse(&mut cursor) {
+            current: &mut child_idx,
+        }) {
             Ok(ret) => {
-                self.current = cursor.current;
+                self.current = child_idx;
                 Ok(ret)
             }
             err => err,
@@ -84,5 +76,13 @@ impl<'a, T> Parser<'a, T> {
 
     pub fn peek_while<P: Peek<'a, T>, N: Peek<'a, T>>(&mut self) -> bool {
         self.reader().peek_while::<P, N>()
+    }
+
+    fn reader<'b>(&'b mut self) -> TokenReader<'a, 'b, T> {
+        TokenReader {
+            input: self.input,
+            tokens: &self.stream,
+            current: &mut self.current,
+        }
     }
 }

@@ -1,6 +1,6 @@
 use lang_lexing::{
     tokens::{Comment, Whitespace},
-    Span, TokenRef, WithSpan,
+    TokenRef, WithSpan,
 };
 
 use crate::{Parse, Peek, TokenReader};
@@ -32,7 +32,7 @@ where
     T: Peek<'a, TOKEN>,
     TOKEN: TokenRef<Whitespace<'a>> + TokenRef<Comment<'a>>,
 {
-    fn peek(cursor: &mut TokenReader<'a, '_, TOKEN>) -> bool {
+    fn peek(cursor: TokenReader<'a, '_, TOKEN>) -> bool {
         if !cursor.peek::<Whitespace>() {
             return false;
         }
@@ -51,7 +51,7 @@ where
     T: Parse<'a, TOKEN>,
     TOKEN: TokenRef<Whitespace<'a>> + TokenRef<Comment<'a>> + WithSpan,
 {
-    fn parse(state: &mut crate::TokenReader<'a, '_, TOKEN>) -> Result<Self, crate::Error> {
+    fn parse(mut state: crate::TokenReader<'a, '_, TOKEN>) -> Result<Self, crate::Error> {
         if !state.peek::<Whitespace>() {
             return Err(state.error("whitespace"));
         }
@@ -60,7 +60,7 @@ where
             state.eat::<Whitespace>()?;
         }
 
-        let ws = Ws(T::parse(state)?);
+        let ws = Ws(state.parse::<T>()?);
 
         if !state.peek::<Whitespace>() {
             return Err(state.error("whitespace"));
@@ -86,7 +86,7 @@ impl<'a, TOKEN> Peek<'a, TOKEN> for Nl<'a>
 where
     TOKEN: TokenRef<Whitespace<'a>>,
 {
-    fn peek(cursor: &mut TokenReader<'a, '_, TOKEN>) -> bool {
+    fn peek(cursor: TokenReader<'a, '_, TOKEN>) -> bool {
         cursor.peek::<Whitespace>()
     }
 }
@@ -95,7 +95,7 @@ impl<'a, TOKEN> Parse<'a, TOKEN> for Nl<'a>
 where
     TOKEN: TokenRef<Whitespace<'a>> + TokenRef<Comment<'a>> + WithSpan,
 {
-    fn parse(state: &mut crate::TokenReader<'a, '_, TOKEN>) -> Result<Self, crate::Error> {
+    fn parse(mut state: crate::TokenReader<'a, '_, TOKEN>) -> Result<Self, crate::Error> {
         let ws = state.parse::<Whitespace>()?;
 
         if !ws.lexeme.contains('\n') {
@@ -139,7 +139,7 @@ where
     T: Peek<'a, TOKEN>,
     TOKEN: TokenRef<Whitespace<'a>> + TokenRef<Comment<'a>>,
 {
-    fn peek(cursor: &mut TokenReader<'a, '_, TOKEN>) -> bool {
+    fn peek(cursor: TokenReader<'a, '_, TOKEN>) -> bool {
         !cursor.peek::<Whitespace>() && cursor.peek::<T>()
     }
 }
@@ -149,12 +149,12 @@ where
     T: Parse<'a, TOKEN>,
     TOKEN: TokenRef<Whitespace<'a>> + TokenRef<Comment<'a>> + WithSpan,
 {
-    fn parse(state: &mut crate::TokenReader<'a, '_, TOKEN>) -> Result<Self, crate::Error> {
+    fn parse(mut state: crate::TokenReader<'a, '_, TOKEN>) -> Result<Self, crate::Error> {
         if state.peek::<Whitespace>() {
             return Err(state.error("whitespace"));
         }
 
-        let nows = NoWs(T::parse(state)?);
+        let nows = NoWs(state.parse()?);
 
         if state.peek::<Whitespace>() {
             return Err(state.error("whitespace"));

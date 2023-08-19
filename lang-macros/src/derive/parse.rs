@@ -49,7 +49,7 @@ fn create_struct(name: Ident, generics: Generics, data: DataStruct) -> syn::Resu
 
     let out = quote!(
         impl #generics_impl #crate_name::parsing::Parse<'parse, #crate_name::lexing::tokens::Token<'parse>> for #name #ty_gen #where_clause {
-            fn parse(state: &mut  #crate_name::parsing::TokenReader<'parse, '_, #crate_name::lexing::tokens::Token<'parse>>) -> Result<Self, #crate_name::parsing::Error> {
+            fn parse(mut state: #crate_name::parsing::TokenReader<'parse, '_, #crate_name::lexing::tokens::Token<'parse>>) -> Result<Self, #crate_name::parsing::Error> {
                 Ok(#instance)
             }
         }
@@ -107,7 +107,7 @@ fn create_enum(name: Ident, generics: Generics, data: DataEnum) -> syn::Result<T
 
     let ret = quote!(
         impl #generics_impl #crate_name::parsing::Parse<'parse, #crate_name::lexing::tokens::Token<'parse>> for #name #ty_gen #where_clause {
-            fn parse(state: &mut  #crate_name::parsing::TokenReader<'parse, '_, #crate_name::lexing::tokens::Token<'parse>>) -> Result<Self, #crate_name::parsing::Error> {
+            fn parse(mut state: #crate_name::parsing::TokenReader<'parse, '_, #crate_name::lexing::tokens::Token<'parse>>) -> Result<Self, #crate_name::parsing::Error> {
                 use #crate_name::lexing::WithSpan;
 
                 let span = state.current().map(|m| m.span()).unwrap_or_default();

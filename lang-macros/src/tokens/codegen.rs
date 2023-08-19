@@ -57,8 +57,8 @@ fn create_tokens(crate_name: &Ident, input: &Tokens) -> TokenStream {
         let token = &item.token;
         (
             &item.name,
-            quote!(#crate_name::parsing::keyword_peek(cursor, #token)),
-            quote!(#crate_name::parsing::keyword(input, #token)?.span),
+            quote!(#crate_name::parsing::keyword_peek(&mut cursor, #token)),
+            quote!(#crate_name::parsing::keyword(&mut input, #token)?.span),
             quote!(#crate_name::lexing::tokens::Ident<'input>),
         )
     });
@@ -67,8 +67,8 @@ fn create_tokens(crate_name: &Ident, input: &Tokens) -> TokenStream {
         let token = &item.token;
         (
             &item.name,
-            quote!(#crate_name::parsing::punctuation_peek(cursor, #token)),
-            quote!(#crate_name::parsing::punctuation(input, #token)?),
+            quote!(#crate_name::parsing::punctuation_peek(&mut cursor, #token)),
+            quote!(#crate_name::parsing::punctuation(&mut input, #token)?),
             quote!(#crate_name::lexing::tokens::Punct<'input>),
         )
     });
@@ -98,7 +98,7 @@ fn create_tokens(crate_name: &Ident, input: &Tokens) -> TokenStream {
                 T: #crate_name::lexing::WithSpan,
             {
 
-                fn peek(cursor: &mut #crate_name::parsing::TokenReader<'input, '_, T>) -> bool {
+                fn peek(mut cursor: #crate_name::parsing::TokenReader<'input, '_, T>) -> bool {
                     #peek
                 }
             }
@@ -108,7 +108,7 @@ fn create_tokens(crate_name: &Ident, input: &Tokens) -> TokenStream {
                 T: #crate_name::lexing::TokenRef<#constraint> + #token_ref<#crate_name::lexing::tokens::Whitespace<'input>> + #token_ref<#crate_name::lexing::tokens::Comment<'input>>,
                 T: #crate_name::lexing::WithSpan,
             {
-                fn parse(input: &mut #crate_name::parsing::TokenReader<'input, '_, T>) -> Result<Self, #crate_name::parsing::Error> {
+                fn parse(mut input: #crate_name::parsing::TokenReader<'input, '_, T>) -> Result<Self, #crate_name::parsing::Error> {
                     let span = #parse;
                     Ok(#name {
                         span

@@ -32,7 +32,7 @@ impl<'a, T, P, TOKEN> Peek<'a, TOKEN> for Punctuated<T, P>
 where
     T: Peek<'a, TOKEN>,
 {
-    fn peek(cursor: &mut TokenReader<'a, '_, TOKEN>) -> bool {
+    fn peek(cursor: TokenReader<'a, '_, TOKEN>) -> bool {
         T::peek(cursor)
     }
 }
@@ -53,7 +53,7 @@ where
     T: Peek<'a, TOKEN> + Parse<'a, TOKEN>,
     P: Peek<'a, TOKEN> + Parse<'a, TOKEN>,
 {
-    fn parse(state: &mut TokenReader<'a, '_, TOKEN>) -> Result<Self, Error> {
+    fn parse(mut state: TokenReader<'a, '_, TOKEN>) -> Result<Self, Error> {
         let mut items = alloc::vec::Vec::new();
 
         loop {
