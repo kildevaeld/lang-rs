@@ -4,10 +4,10 @@ version = "0.1.0"
 edition = "2021"
 
 [features]
-default = ["std"]
+default = []
 tokens = ["lang-lexing/tokens", "unicode-segmentation", "either"]
 either = ["dep:either", "lang-lexing/either"]
-std = []
+std = ["lang-lexing/std"]
 serde = ["dep:serde"]
 
 
