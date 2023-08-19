@@ -1,5 +1,6 @@
+use lang::{Parse, Peek, WithSpan};
 use lang_lexing::tokens::{Ident, Literal, LiteralNumber};
-use lang_parsing::Parser;
+use lang_parsing::{tokens::Group, Parser};
 
 #[macro_use]
 pub mod tokens {
@@ -58,7 +59,7 @@ pub enum Expr<'a> {
     Tenary(Tenary<'a>),
 }
 
-lang::precedence2! {
+lang::precedence! {
     expression -> Expr<'input>
     rule lhs:@ "=" !"=" rhs:@ {
         Ok(Expr::Binary {
@@ -67,6 +68,7 @@ lang::precedence2! {
             op: BinaryOperator::Assign
         })
     }
+    --
     rule expr:@ "?" cons:@ ":" alt:@ {
         Ok(Expr::Tenary(Tenary {
             expr: Box::new(expr),
@@ -111,15 +113,29 @@ lang::precedence2! {
 
 }
 
+#[derive(Debug, Parse, Peek, WithSpan)]
+struct Fn<'a> {
+    fn_token: Token![fn],
+    name: Ident<'a>,
+    params: (Token!["("], Token![")"]),
+    body: Group<Token!["{"], Vec<Expr<'a>>, Token!["}"]>,
+}
+
 fn main() {
     let input = "ident = 20 - 100 / 2 == 202 ? true : false";
+
+    let input = r#"
+    fn test() {
+        200 + test mig / 20202
+    }
+    "#;
 
     let lexer = tokens::Lexer::new(input);
 
     let mut parser =
         Parser::from_tokens(input, lexer.skip_whitespace(true).tokenize()).expect("lex");
 
-    let ast = parser.parse::<Expr>().expect("message");
+    let ast = parser.parse::<Fn>().expect("message");
 
     println!("{:#?}", ast)
 }

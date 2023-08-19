@@ -13,7 +13,7 @@ fn main() {
     let lexer = tokens::Lexer::new(input);
 
     let mut parser =
-        Parser::from_tokens(input, lexer.skip_whitespace(true).tokenize()).expect("lex");
+        Parser::from_tokens(input, lexer.skip_whitespace(false).tokenize()).expect("lex");
 
     let stmts = parser.parse::<Stmt>().expect("message");
 

@@ -55,7 +55,7 @@ pub mod tokens {
 
 lang::precedence!(
     expression -> Expr
-    lhs:@ op:([+] [-]) rhs:@ {
+    rule lhs:@ op:([+] [-]) rhs:@ {
 
         let i = op.slice(input.input()).unwrap();
 
@@ -73,7 +73,7 @@ lang::precedence!(
 
     }
     --
-    lhs:@ op:([/] [*]) rhs:@ {
+    rule lhs:@ op:([/] [*]) rhs:@ {
         let i = op.slice(input.input()).unwrap();
 
         if i == "/" {
@@ -89,9 +89,9 @@ lang::precedence!(
         }
     }
     --
-    "(" e:@ ")" { Ok(e) }
+    rule "(" e:@ ")" { Ok(e) }
     --
-    lhs:@ "(" params:Params ")" { Ok(Expr::Call {
+    rule lhs:@ "(" params:Params ")" { Ok(Expr::Call {
         object: Box::new(lhs),
         params
     }) }

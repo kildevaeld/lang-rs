@@ -38,9 +38,13 @@ macro_rules! lex {
                         return false
                     };
 
+
+
                     match offset_cursor.current() {
                         None => false,
-                        Some(current) => <T as TokenRef<Self>>::value(current).is_some(),
+                        Some(current) => {
+                            <T as TokenRef<Self>>::value(current).is_some()
+                        },
                     }
                 }
             }
@@ -172,7 +176,7 @@ pub fn keyword_peek<'a, T>(cursor: &mut TokenReader<'a, '_, T>, keyword: &str) -
 where
     T: TokenRef<Ident<'a>> + TokenRef<Whitespace<'a>> + TokenRef<Comment<'a>> + WithSpan,
 {
-    let ident = match cursor.parse::<Ident>() {
+    let ident = match Ident::parse(&mut cursor.clone()) {
         Ok(i) => i,
         Err(_) => return false,
     };
@@ -220,5 +224,5 @@ pub fn punctuation_peek<'a, T>(cursor: &mut TokenReader<'a, '_, T>, token: &str)
 where
     T: TokenRef<Punct<'a>> + TokenRef<Whitespace<'a>> + TokenRef<Comment<'a>> + WithSpan,
 {
-    punct_helper(cursor, token).is_ok()
+    punct_helper(&mut cursor.clone(), token).is_ok()
 }

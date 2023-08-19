@@ -21,9 +21,9 @@ pub fn run(bundle: Pratt) -> TokenStream {
         #[allow(unused_braces, non_snake_case)]
         mod #module_name {
             use super::*;
-            use #crate_name::{parsing::{Parse, Peek, TokenReader, Cursor, Error}, lexing::{tokens::Token, WithSpan, Span}};
+            use #crate_name::{parsing::{Parse, Peek, TokenReader, Error}, lexing::{tokens::Token, WithSpan, Span}};
 
-            fn __peek<'input>(input: &mut Cursor<'input, '_, Token<'input>>) -> bool {
+            fn __peek<'input>(input: &mut TokenReader<'input, '_, Token<'input>>) -> bool {
                 #peek
             }
 
@@ -61,7 +61,7 @@ pub fn run(bundle: Pratt) -> TokenStream {
             }
 
             impl<'input> Peek<'input, Token<'input>> for #return_type {
-                fn peek(cursor: &mut Cursor<'input, '_, Token<'input>>) -> bool {
+                fn peek(cursor: &mut TokenReader<'input, '_, Token<'input>>) -> bool {
                     __peek(cursor)
                 }
             }

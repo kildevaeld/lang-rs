@@ -31,7 +31,7 @@ pub struct CallExpr<'a> {
     pub args: Args<'a>,
 }
 
-#[derive(Debug, Peek, WithSpan)]
+#[derive(Debug, WithSpan)]
 #[visitor(with_mut = true)]
 pub enum Expr<'a> {
     Literal(Literal<'a>),
@@ -42,7 +42,7 @@ pub enum Expr<'a> {
 
 lang::precedence! {
     expression -> Expr<'input>
-    lhs:@ op:BinaryOperator rhs:@ {
+    rule lhs:@ op:BinaryOperator rhs:@ {
         Ok(Expr::Binary(BinaryExpr {
             left: Box::new(lhs),
             operator:op,
@@ -50,18 +50,18 @@ lang::precedence! {
         }))
     }
     --
-    lhs:@ args:Args {
+    rule lhs:@ args:Args {
         Ok(Expr::Call(CallExpr {
             target: Box::new(lhs),
             args: args
         }))
     }
     --
-    {
-       if input.peek::<Literal>() {
-            Ok(Expr::Literal(input.parse()?))
-       } else {
-            Ok(Expr::Ident(input.parse()?))
-       }
+    rule o:Literal {
+        Ok(Expr::Literal(o))
+    } / i:Ident {
+        Ok(Expr::Ident(IdentExpr {
+            ident: i
+        }))
     }
 }

@@ -39,7 +39,7 @@ impl<'a, T> Parser<'a, T> {
         self.input
     }
 
-    fn reader<'b>(&'b mut self) -> TokenReader<'a, 'b, T> {
+    pub fn reader<'b>(&'b mut self) -> TokenReader<'a, 'b, T> {
         TokenReader {
             input: self.input,
             tokens: &self.stream,

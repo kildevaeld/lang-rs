@@ -17,13 +17,13 @@ pub fn tokens(input: TokenStream) -> TokenStream {
     tokens::run(input.into()).into()
 }
 
-#[proc_macro]
-pub fn precedence(input: TokenStream) -> TokenStream {
-    pratt::run(input.into()).into()
-}
+// #[proc_macro]
+// pub fn precedence(input: TokenStream) -> TokenStream {
+//     pratt::run(input.into()).into()
+// }
 
 #[proc_macro]
-pub fn precedence2(input: TokenStream) -> TokenStream {
+pub fn precedence(input: TokenStream) -> TokenStream {
     pratt2::run(input.into()).into()
 }
 

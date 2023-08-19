@@ -26,7 +26,8 @@ fn extract(crate_name: &Ident, tokens: &Tokens) -> TokenStream {
         .map(|ty| quote!(#ty))
         .chain(vec![
             quote!(#crate_name::lexing::tokens::Punct<'input>),
-            quote!(#crate_name::lexing::tokens::Ident<'input>)
+            quote!(#crate_name::lexing::tokens::Ident<'input>),
+            quote!(#crate_name::lexing::tokens::Whitespace<'input>),
         ]);
 
     // let literals = tokens
@@ -81,6 +82,8 @@ fn create_tokens(crate_name: &Ident, input: &Tokens) -> TokenStream {
     #[cfg(not(feature = "serde"))]
     let serde = quote!(Copy);
 
+    let token_ref = quote!(#crate_name::lexing::TokenRef);
+
     let items = keywords.chain(puncts).map(|(name, peek, parse, constraint)| {
         
         quote!(
@@ -91,7 +94,7 @@ fn create_tokens(crate_name: &Ident, input: &Tokens) -> TokenStream {
 
             impl<'input, T> #crate_name::parsing::Peek<'input, T> for #name
             where
-                T: #crate_name::lexing::TokenRef<#constraint>,
+                T: #crate_name::lexing::TokenRef<#constraint> + #token_ref<#crate_name::lexing::tokens::Whitespace<'input>> + #token_ref<#crate_name::lexing::tokens::Comment<'input>>,
                 T: #crate_name::lexing::WithSpan,
             {
 
@@ -102,7 +105,7 @@ fn create_tokens(crate_name: &Ident, input: &Tokens) -> TokenStream {
 
             impl<'input, T> #crate_name::parsing::Parse<'input, T> for #name 
             where
-                T: #crate_name::lexing::TokenRef<#constraint>,
+                T: #crate_name::lexing::TokenRef<#constraint> + #token_ref<#crate_name::lexing::tokens::Whitespace<'input>> + #token_ref<#crate_name::lexing::tokens::Comment<'input>>,
                 T: #crate_name::lexing::WithSpan,
             {
                 fn parse(input: &mut #crate_name::parsing::TokenReader<'input, '_, T>) -> Result<Self, #crate_name::parsing::Error> {
