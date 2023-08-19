@@ -1,6 +1,6 @@
 use lang::{Parse, Peek, WithSpan};
 use lang_lexing::tokens::{Ident, Literal, LiteralNumber};
-use lang_parsing::{tokens::Group, Parser};
+use lang_parsing::{tokens::Group, tokens::NoWs, Parser};
 
 #[macro_use]
 pub mod tokens {
@@ -126,14 +126,14 @@ fn main() {
 
     let input = r#"
     fn test() {
-        200 + test mig / 20202
+        200 +test mig / 20202
     }
     "#;
 
     let lexer = tokens::Lexer::new(input);
 
     let mut parser =
-        Parser::from_tokens(input, lexer.skip_whitespace(true).tokenize()).expect("lex");
+        Parser::from_tokens(input, lexer.skip_whitespace(false).tokenize()).expect("lex");
 
     let ast = parser.parse::<Fn>().expect("message");
 

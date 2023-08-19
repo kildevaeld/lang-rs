@@ -326,7 +326,7 @@ impl Parse for Expr {
 #[derive(Debug)]
 pub enum Atom {
     Prec,
-    Parser { name: Ident },
+    Parser { name: syn::Type },
     Token(AtomToken),
     Rule(Vec<Rule>),
 }
@@ -402,7 +402,7 @@ impl Parse for Atom {
             let _ = input.parse::<Token![@]>()?;
             Self::Prec
         } else if input.peek(Ident) {
-            let name = input.parse::<Ident>()?;
+            let name = input.parse::<Type>()?;
             Self::Parser { name }
         } else if input.peek(syn::token::Paren) {
             let group = input.parse::<Group>()?;
