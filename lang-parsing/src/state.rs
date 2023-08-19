@@ -81,4 +81,8 @@ impl<'a, T> Parser<'a, T> {
     pub fn peek3<P: Peek<'a, T>>(&mut self) -> bool {
         self.reader().peek_offset::<P>(2)
     }
+
+    pub fn peek_while<P: Peek<'a, T>, N: Peek<'a, T>>(&mut self) -> bool {
+        self.reader().peek_while::<P, N>()
+    }
 }

@@ -14,41 +14,77 @@ use unicode_segmentation::UnicodeSegmentation;
 macro_rules! lex {
     ($($name: ident),*) => {
         $(
-            impl<'a, T> Parse<'a, T> for $name<'a> where T: WithSpan + TokenRef<$name<'a>> {
+            impl<'a, T> Parse<'a, T> for $name<'a> where T: WithSpan + TokenRef<$name<'a>> + TokenRef<Whitespace<'a>> {
                 fn parse(state: &mut TokenReader<'a, '_, T>) -> Result<Self, Error> {
+                    state.eat_while::<Whitespace>()?;
                     state.step(|cursor| match cursor.take::<$name>() {
                         Some(ret) => Ok(ret),
                         None => Err(cursor.error(stringify!($name))),
                     })
                 }
             }
+
+            impl<'a, T> Peek<'a, T> for $name<'a>
+            where
+                T: TokenRef<Self> + TokenRef<Comment<'a>> + TokenRef<Whitespace<'a>>,
+            {
+                fn peek(cursor: &mut Cursor<'a, '_, T>) -> bool {
+                    let mut offset = 0;
+                    while cursor.peek_offset::<Whitespace>(offset) || cursor.peek_offset::<Comment>(offset) {
+                        offset += 1;
+                    }
+
+                    match cursor.current() {
+                        None => false,
+                        Some(current) => <T as TokenRef<Self>>::value(current).is_some(),
+                    }
+                }
+            }
         )*
     };
 }
 
-impl<'a, T> Peek<'a, T> for Ident<'a>
-where
-    T: TokenRef<Self>,
-{
-    fn peek(cursor: &mut Cursor<'a, '_, T>) -> bool {
-        match cursor.current() {
-            None => false,
-            Some(current) => current.value().is_some(),
-        }
-    }
-}
+// impl<'a, T> Peek<'a, T> for Ident<'a>
+// where
+//     T: TokenRef<Self> + TokenRef<Whitespace<'a>> + TokenRef<Comment<'a>>,
+// {
+//     fn peek(cursor: &mut Cursor<'a, '_, T>) -> bool {
+//         let mut offset = 0;
+//         while cursor.peek_offset::<Whitespace>(offset) || cursor.peek_offset::<Comment>(offset) {
+//             offset += 1;
+//         }
 
-impl<'a, T> Peek<'a, T> for Literal<'a>
-where
-    T: TokenRef<Self>,
-{
-    fn peek(cursor: &mut Cursor<'a, '_, T>) -> bool {
-        match cursor.current() {
-            None => false,
-            Some(current) => current.value().is_some(),
-        }
-    }
-}
+//         match cursor.current() {
+//             None => false,
+//             Some(current) => <T as TokenRef<Self>>::value(current).is_some(),
+//         }
+//     }
+// }
+
+// impl<'a, T> Parse<'a, T> for Ident<'a>
+// where
+//     T: TokenRef<Self> + TokenRef<Whitespace<'a>> + TokenRef<Comment<'a>> + WithSpan,
+// {
+//     fn parse(state: &mut TokenReader<'a, '_, T>) -> Result<Self, Error> {
+//         state.eat_while::<Whitespace>()?;
+//         state.step(|cursor| match cursor.take::<Self>() {
+//             Some(ret) => Ok(ret),
+//             None => Err(cursor.error("identifier")),
+//         })
+//     }
+// }
+
+// impl<'a, T> Peek<'a, T> for Literal<'a>
+// where
+//     T: TokenRef<Self>,
+// {
+//     fn peek(cursor: &mut Cursor<'a, '_, T>) -> bool {
+//         match cursor.current() {
+//             None => false,
+//             Some(current) => current.value().is_some(),
+//         }
+//     }
+// }
 
 impl<'a, T> Peek<'a, T> for Whitespace<'a>
 where
@@ -59,6 +95,18 @@ where
             None => false,
             Some(current) => current.value().is_some(),
         }
+    }
+}
+
+impl<'a, T> Parse<'a, T> for Whitespace<'a>
+where
+    T: TokenRef<Self> + WithSpan,
+{
+    fn parse(state: &mut TokenReader<'a, '_, T>) -> Result<Self, Error> {
+        state.step(|cursor| match cursor.take::<Self>() {
+            Some(ret) => Ok(ret),
+            None => Err(cursor.error("whitespace")),
+        })
     }
 }
 
@@ -74,24 +122,46 @@ where
     }
 }
 
-lex!(Ident, Punct, Literal, Whitespace, Comment);
+impl<'a, T> Parse<'a, T> for Comment<'a>
+where
+    T: TokenRef<Self> + WithSpan,
+{
+    fn parse(state: &mut TokenReader<'a, '_, T>) -> Result<Self, Error> {
+        state.step(|cursor| match cursor.take::<Self>() {
+            Some(ret) => Ok(ret),
+            None => Err(cursor.error("comment")),
+        })
+    }
+}
+
+lex!(Ident, Punct, Literal);
 
 pub fn keyword<'a, T>(
     reader: &mut TokenReader<'a, '_, T>,
     keyword: &str,
 ) -> Result<Ident<'a>, Error>
 where
-    T: TokenRef<Ident<'a>> + WithSpan,
+    T: TokenRef<Ident<'a>> + TokenRef<Whitespace<'a>> + TokenRef<Comment<'a>> + WithSpan,
 {
-    reader.step(|cursor| {
-        if let Some(ident) = cursor.take::<Ident>() {
-            if ident.lexeme == keyword {
-                return Ok(ident);
-            }
-        }
+    let ident = reader
+        .parse::<Ident>()
+        .map_err(|_| reader.error(("keyword".to_string(), keyword.to_string())))?;
 
-        Err(cursor.error(("keyword".to_string(), keyword.to_string())))
-    })
+    if ident.lexeme == keyword {
+        Ok(ident)
+    } else {
+        Err(reader.error(("keyword".to_string(), keyword.to_string())))
+    }
+
+    // reader.step(|cursor| {
+    //     if let Some(ident) = cursor.take::<Ident>() {
+    //         if ident.lexeme == keyword {
+    //             return Ok(ident);
+    //         }
+    //     }
+
+    //     Err(cursor.error(("keyword".to_string(), keyword.to_string())))
+    // })
 }
 
 pub fn keyword_peek<'a, T>(cursor: &mut Cursor<'a, '_, T>, keyword: &str) -> bool

@@ -80,6 +80,17 @@ impl<'a, 'b, T> Cursor<'a, 'b, T> {
         }
     }
 
+    /// Peek first non N
+    /// eg: cursor.peek_while::<Ident, Whitespace>();
+    pub fn peek_while<P: Peek<'a, T>, N: Peek<'a, T>>(&mut self) -> bool {
+        let mut i = 1;
+        while self.peek_offset::<N>(i) {
+            i += 1;
+        }
+
+        P::peek(&mut self.offset(i as isize).expect("peek"))
+    }
+
     pub fn peek<P: Peek<'a, T>>(&mut self) -> bool {
         P::peek(self)
     }

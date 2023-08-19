@@ -49,11 +49,32 @@ impl<'a, 'b, T> TokenReader<'a, 'b, T> {
         P::peek(&mut cursor)
     }
 
+    pub fn peek_while<P: Peek<'a, T>, N: Peek<'a, T>>(&mut self) -> bool {
+        let mut cursor = Cursor {
+            input: self.input,
+            tokens: self.tokens,
+            current: self.current,
+        };
+
+        cursor.peek_while::<P, N>()
+    }
+
     pub fn eat<P>(&mut self) -> Result<(), Error>
     where
         P: Parse<'a, T>,
     {
         self.parse::<P>().map(|_| ())
+    }
+
+    pub fn eat_while<P>(&mut self) -> Result<(), Error>
+    where
+        P: Parse<'a, T> + Peek<'a, T>,
+    {
+        while self.peek::<P>() {
+            self.eat::<P>()?;
+        }
+
+        Ok(())
     }
 
     pub fn step<F, R>(&mut self, func: F) -> Result<R, Error>
