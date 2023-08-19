@@ -44,7 +44,7 @@ fn create_enum(name: Ident, generics: Generics, data: DataEnum) -> syn::Result<T
     let token_stream = quote!(
 
         impl #generics_impl #crate_name::parsing::Peek<'parse, #crate_name::lexing::tokens::Token<'parse>> for #name #ty_gen #where_clause {
-            fn peek(cursor: &mut #crate_name::parsing::Cursor<'parse, '_,  #crate_name::lexing::tokens::Token<'parse>>) -> bool {
+            fn peek(cursor: &mut #crate_name::parsing::TokenReader<'parse, '_,  #crate_name::lexing::tokens::Token<'parse>>) -> bool {
                 use #crate_name::parsing::Peek;
                 #(#peeks)||*
             }
@@ -65,7 +65,7 @@ fn create_struct(name: Ident, generics: Generics, data: DataStruct) -> syn::Resu
     Ok(quote!(
 
         impl #generics_impl #crate_name::parsing::Peek<'parse, #crate_name::lexing::tokens::Token<'parse>> for #name #ty_gen #where_clause {
-            fn peek(cursor: &mut #crate_name::parsing::Cursor<'parse, '_,  #crate_name::lexing::tokens::Token<'parse>>) -> bool {
+            fn peek(cursor: &mut #crate_name::parsing::TokenReader<'parse, '_,  #crate_name::lexing::tokens::Token<'parse>>) -> bool {
                 use #crate_name::parsing::Peek;
                 #peek
             }

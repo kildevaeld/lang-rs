@@ -1,5 +1,7 @@
-use super::cursor::Cursor;
+// use super::cursor::Cursor;
+
+use crate::TokenReader;
 
 pub trait Peek<'a, T> {
-    fn peek(cursor: &mut Cursor<'a, '_, T>) -> bool;
+    fn peek(cursor: &mut TokenReader<'a, '_, T>) -> bool;
 }

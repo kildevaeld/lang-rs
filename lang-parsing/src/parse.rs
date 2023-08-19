@@ -1,4 +1,4 @@
-use super::{cursor::Cursor, error::Error, reader::TokenReader, Peek};
+use super::{error::Error, reader::TokenReader, Peek};
 use crate::ErrorKind;
 use alloc::boxed::Box;
 
@@ -22,7 +22,7 @@ macro_rules! parse_impl {
     ($first: ident) => {
 
         impl<'a, T, $first: Peek<'a, T>> Peek<'a, T> for ($first, ) {
-            fn peek(cursor: &mut Cursor<'a, '_, T>) -> bool {
+            fn peek(cursor: &mut TokenReader<'a, '_, T>) -> bool {
                 $first::peek(cursor)
             }
         }
@@ -39,7 +39,7 @@ macro_rules! parse_impl {
         parse_impl!($($rest)*);
 
         impl<'a, T, $first: Peek<'a, T>, $($rest),*> Peek<'a, T> for ($first, $($rest),*) {
-            fn peek(cursor: &mut Cursor<'a, '_, T>) -> bool {
+            fn peek(cursor: &mut TokenReader<'a, '_, T>) -> bool {
                 $first::peek(cursor)
             }
         }
@@ -74,7 +74,7 @@ impl<'a, T, TOKEN> Peek<'a, TOKEN> for Option<T>
 where
     T: Peek<'a, TOKEN>,
 {
-    fn peek(_cursor: &mut Cursor<'a, '_, TOKEN>) -> bool {
+    fn peek(_cursor: &mut TokenReader<'a, '_, TOKEN>) -> bool {
         true
     }
 }
@@ -104,7 +104,7 @@ where
     R: Peek<'a, T>,
     T: lang_lexing::WithSpan,
 {
-    fn peek(cursor: &mut Cursor<'a, '_, T>) -> bool {
+    fn peek(cursor: &mut TokenReader<'a, '_, T>) -> bool {
         L::peek(cursor) || R::peek(cursor)
     }
 }
@@ -122,7 +122,7 @@ impl<'a, T, TOKEN> Peek<'a, TOKEN> for Box<T>
 where
     T: Peek<'a, TOKEN>,
 {
-    fn peek(cursor: &mut Cursor<'a, '_, TOKEN>) -> bool {
+    fn peek(cursor: &mut TokenReader<'a, '_, TOKEN>) -> bool {
         T::peek(cursor)
     }
 }
@@ -131,7 +131,7 @@ impl<'a, T, TOKEN> Peek<'a, TOKEN> for alloc::vec::Vec<T>
 where
     T: Peek<'a, TOKEN>,
 {
-    fn peek(cursor: &mut Cursor<'a, '_, TOKEN>) -> bool {
+    fn peek(cursor: &mut TokenReader<'a, '_, TOKEN>) -> bool {
         T::peek(cursor)
     }
 }

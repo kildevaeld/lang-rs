@@ -3,7 +3,7 @@ use lang_lexing::{
     Span, TokenRef, WithSpan,
 };
 
-use crate::{Cursor, Parse, Peek};
+use crate::{Parse, Peek, TokenReader};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Ws<T>(T);
@@ -32,7 +32,7 @@ where
     T: Peek<'a, TOKEN>,
     TOKEN: TokenRef<Whitespace<'a>> + TokenRef<Comment<'a>>,
 {
-    fn peek(cursor: &mut Cursor<'a, '_, TOKEN>) -> bool {
+    fn peek(cursor: &mut TokenReader<'a, '_, TOKEN>) -> bool {
         if !cursor.peek::<Whitespace>() {
             return false;
         }
@@ -42,7 +42,7 @@ where
             i += 1;
         }
 
-        T::peek(&mut cursor.offset(i as isize).expect("peek"))
+        cursor.peek_offset::<T>(i)
     }
 }
 
@@ -86,7 +86,7 @@ impl<'a, TOKEN> Peek<'a, TOKEN> for Nl<'a>
 where
     TOKEN: TokenRef<Whitespace<'a>>,
 {
-    fn peek(cursor: &mut Cursor<'a, '_, TOKEN>) -> bool {
+    fn peek(cursor: &mut TokenReader<'a, '_, TOKEN>) -> bool {
         cursor.peek::<Whitespace>()
     }
 }
@@ -139,7 +139,7 @@ where
     T: Peek<'a, TOKEN>,
     TOKEN: TokenRef<Whitespace<'a>> + TokenRef<Comment<'a>>,
 {
-    fn peek(cursor: &mut Cursor<'a, '_, TOKEN>) -> bool {
+    fn peek(cursor: &mut TokenReader<'a, '_, TOKEN>) -> bool {
         !cursor.peek::<Whitespace>() && cursor.peek::<T>()
     }
 }

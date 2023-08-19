@@ -14,7 +14,7 @@ impl<'a, O, T, C, TOKEN> Peek<'a, TOKEN> for Group<O, T, C>
 where
     O: Peek<'a, TOKEN>,
 {
-    fn peek(cursor: &mut crate::Cursor<'a, '_, TOKEN>) -> bool {
+    fn peek(cursor: &mut crate::TokenReader<'a, '_, TOKEN>) -> bool {
         O::peek(cursor)
     }
 }

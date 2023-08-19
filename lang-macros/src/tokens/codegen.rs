@@ -95,7 +95,7 @@ fn create_tokens(crate_name: &Ident, input: &Tokens) -> TokenStream {
                 T: #crate_name::lexing::WithSpan,
             {
 
-                fn peek(cursor: &mut #crate_name::parsing::Cursor<'input, '_, T>) -> bool {
+                fn peek(cursor: &mut #crate_name::parsing::TokenReader<'input, '_, T>) -> bool {
                     #peek
                 }
             }

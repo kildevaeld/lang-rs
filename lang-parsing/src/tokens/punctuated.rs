@@ -32,7 +32,7 @@ impl<'a, T, P, TOKEN> Peek<'a, TOKEN> for Punctuated<T, P>
 where
     T: Peek<'a, TOKEN>,
 {
-    fn peek(cursor: &mut crate::Cursor<'a, '_, TOKEN>) -> bool {
+    fn peek(cursor: &mut TokenReader<'a, '_, TOKEN>) -> bool {
         T::peek(cursor)
     }
 }

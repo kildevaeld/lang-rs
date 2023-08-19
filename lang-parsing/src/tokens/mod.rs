@@ -3,7 +3,7 @@ mod punctuated;
 mod ws;
 
 pub use self::{group::*, punctuated::*, ws::*};
-use crate::{Cursor, Error, Parse, Peek, TokenReader};
+use crate::{Error, Parse, Peek, TokenReader};
 use alloc::string::ToString;
 use lang_lexing::{
     tokens::{Comment, Ident, Literal, Punct, Whitespace},
@@ -28,13 +28,17 @@ macro_rules! lex {
             where
                 T: TokenRef<Self> + TokenRef<Comment<'a>> + TokenRef<Whitespace<'a>>,
             {
-                fn peek(cursor: &mut Cursor<'a, '_, T>) -> bool {
+                fn peek(cursor: &mut TokenReader<'a, '_, T>) -> bool {
                     let mut offset = 0;
                     while cursor.peek_offset::<Whitespace>(offset) || cursor.peek_offset::<Comment>(offset) {
                         offset += 1;
                     }
 
-                    match cursor.current() {
+                    let Ok(offset_cursor) = cursor.offset(offset as isize) else {
+                        return false
+                    };
+
+                    match offset_cursor.current() {
                         None => false,
                         Some(current) => <T as TokenRef<Self>>::value(current).is_some(),
                     }
@@ -90,7 +94,7 @@ impl<'a, T> Peek<'a, T> for Whitespace<'a>
 where
     T: TokenRef<Self>,
 {
-    fn peek(cursor: &mut Cursor<'a, '_, T>) -> bool {
+    fn peek(cursor: &mut TokenReader<'a, '_, T>) -> bool {
         match cursor.current() {
             None => false,
             Some(current) => current.value().is_some(),
@@ -114,7 +118,7 @@ impl<'a, T> Peek<'a, T> for Comment<'a>
 where
     T: TokenRef<Self>,
 {
-    fn peek(cursor: &mut Cursor<'a, '_, T>) -> bool {
+    fn peek(cursor: &mut TokenReader<'a, '_, T>) -> bool {
         match cursor.current() {
             None => false,
             Some(current) => current.value().is_some(),
@@ -164,26 +168,24 @@ where
     // })
 }
 
-pub fn keyword_peek<'a, T>(cursor: &mut Cursor<'a, '_, T>, keyword: &str) -> bool
+pub fn keyword_peek<'a, T>(cursor: &mut TokenReader<'a, '_, T>, keyword: &str) -> bool
 where
-    T: TokenRef<Ident<'a>>,
+    T: TokenRef<Ident<'a>> + TokenRef<Whitespace<'a>> + TokenRef<Comment<'a>> + WithSpan,
 {
-    if let Some(token) = cursor.current() {
-        if let Some(ident) = token.value() {
-            ident.lexeme == keyword
-        } else {
-            false
-        }
-    } else {
-        false
-    }
+    let ident = match cursor.parse::<Ident>() {
+        Ok(i) => i,
+        Err(_) => return false,
+    };
+    ident.lexeme == keyword
 }
 
-fn punct_helper<'a, T>(cursor: &mut Cursor<'a, '_, T>, token: &str) -> Result<Span, Error>
+fn punct_helper<'a, T>(cursor: &mut TokenReader<'a, '_, T>, token: &str) -> Result<Span, Error>
 where
-    T: TokenRef<Punct<'a>> + WithSpan,
+    T: TokenRef<Punct<'a>> + TokenRef<Whitespace<'a>> + WithSpan,
 {
     let mut span: Option<Span> = None;
+
+    cursor.eat_while::<Whitespace>()?;
 
     for part in token.split_word_bounds() {
         let punct = match cursor.take::<Punct<'a>>() {
@@ -209,14 +211,14 @@ where
 
 pub fn punctuation<'a, T>(reader: &mut TokenReader<'a, '_, T>, token: &str) -> Result<Span, Error>
 where
-    T: TokenRef<Punct<'a>> + WithSpan,
+    T: TokenRef<Punct<'a>> + TokenRef<Whitespace<'a>> + TokenRef<Comment<'a>> + WithSpan,
 {
     reader.step(|cursor| punct_helper(cursor, token))
 }
 
-pub fn punctuation_peek<'a, T>(cursor: &mut Cursor<'a, '_, T>, token: &str) -> bool
+pub fn punctuation_peek<'a, T>(cursor: &mut TokenReader<'a, '_, T>, token: &str) -> bool
 where
-    T: TokenRef<Punct<'a>> + WithSpan,
+    T: TokenRef<Punct<'a>> + TokenRef<Whitespace<'a>> + TokenRef<Comment<'a>> + WithSpan,
 {
-    punct_helper(&mut cursor.clone(), token).is_ok()
+    punct_helper(cursor, token).is_ok()
 }

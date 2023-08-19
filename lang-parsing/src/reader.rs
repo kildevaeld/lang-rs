@@ -1,13 +1,22 @@
-use super::{cursor::Cursor, error::Error, parse::Parse, peek::Peek};
+use super::{error::Error, parse::Parse, peek::Peek};
 use crate::ErrorKind;
 use alloc::vec::Vec;
-use lang_lexing::WithSpan;
+use lang_lexing::{TokenRef, WithSpan};
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct TokenReader<'a, 'b, T> {
     pub(crate) input: &'a str,
     pub(crate) tokens: &'b Vec<T>,
     pub(crate) current: usize,
+}
+impl<'a, 'b, T> Clone for TokenReader<'a, 'b, T> {
+    fn clone(&self) -> Self {
+        TokenReader {
+            input: self.input,
+            tokens: self.tokens,
+            current: self.current,
+        }
+    }
 }
 
 impl<'a, 'b, T> TokenReader<'a, 'b, T> {
@@ -41,7 +50,7 @@ impl<'a, 'b, T> TokenReader<'a, 'b, T> {
     }
 
     pub fn peek_offset<P: Peek<'a, T>>(&self, offset: usize) -> bool {
-        let mut cursor = Cursor {
+        let mut cursor = TokenReader {
             input: self.input,
             tokens: self.tokens,
             current: self.current + offset,
@@ -50,13 +59,11 @@ impl<'a, 'b, T> TokenReader<'a, 'b, T> {
     }
 
     pub fn peek_while<P: Peek<'a, T>, N: Peek<'a, T>>(&mut self) -> bool {
-        let mut cursor = Cursor {
-            input: self.input,
-            tokens: self.tokens,
-            current: self.current,
-        };
-
-        cursor.peek_while::<P, N>()
+        let mut i = 1;
+        while self.peek_offset::<N>(i) {
+            i += 1;
+        }
+        self.peek_offset::<P>(i)
     }
 
     pub fn eat<P>(&mut self) -> Result<(), Error>
@@ -77,23 +84,36 @@ impl<'a, 'b, T> TokenReader<'a, 'b, T> {
         Ok(())
     }
 
+    pub fn take<I>(&mut self) -> Option<I>
+    where
+        T: TokenRef<I>,
+        I: Clone,
+    {
+        self.next(|item| item.value().cloned())
+    }
+
+    fn next<F, R>(&mut self, func: F) -> Option<R>
+    where
+        F: FnOnce(&T) -> Option<R>,
+    {
+        match self.tokens.get(self.current) {
+            Some(found) => {
+                if let Some(ret) = func(found) {
+                    self.current += 1;
+                    Some(ret)
+                } else {
+                    None
+                }
+            }
+            _ => None,
+        }
+    }
+
     pub fn step<F, R>(&mut self, func: F) -> Result<R, Error>
     where
-        F: FnOnce(&mut Cursor<'a, 'b, T>) -> Result<R, Error>,
+        F: FnMut(&mut TokenReader<'a, '_, T>) -> Result<R, Error>,
     {
-        let mut cursor = Cursor {
-            input: self.input,
-            tokens: self.tokens,
-            current: self.current,
-        };
-
-        match func(&mut cursor) {
-            Ok(ret) => {
-                self.current = cursor.current;
-                Ok(ret)
-            }
-            err => err,
-        }
+        self.child::<F, R>(func)
     }
 
     fn child<F, R>(&mut self, mut func: F) -> Result<R, Error>
@@ -113,6 +133,25 @@ impl<'a, 'b, T> TokenReader<'a, 'b, T> {
             }
             e => e,
         }
+    }
+
+    pub fn offset(&self, offset: isize) -> Result<TokenReader<'a, 'b, T>, Error> {
+        let len = self.tokens.len() as isize;
+        let idx = self.current as isize;
+        let new_idx = idx + offset;
+        let new_idx = if new_idx < 0 {
+            0
+        } else if new_idx > len {
+            (len as usize) - 1
+        } else {
+            new_idx as usize
+        };
+
+        Ok(TokenReader {
+            input: self.input,
+            tokens: self.tokens,
+            current: new_idx,
+        })
     }
 
     pub fn error(&self, error: impl Into<ErrorKind>) -> Error
