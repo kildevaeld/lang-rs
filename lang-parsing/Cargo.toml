@@ -12,8 +12,14 @@ serde = ["dep:serde"]
 
 
 [dependencies]
-lang-lexing = { path = "../lang-lexing"}
+lang-lexing = { path = "../lang-lexing" }
 unicode-segmentation = { version = "1", optional = true }
-either = { version = "1", optional = true}
+either = { version = "1", optional = true }
 
-serde = { version = "1", features = ["derive"], optional = true}
+serde = { version = "1", features = ["derive"], optional = true }
+
+
+[[example]]
+path = "examples/parsing.rs"
+name = "parsing"
+require-features = ["tokens"]

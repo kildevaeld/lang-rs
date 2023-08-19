@@ -1,7 +1,8 @@
 mod group;
 mod punctuated;
+mod ws;
 
-pub use self::{group::*, punctuated::*};
+pub use self::{group::*, punctuated::*, ws::*};
 use crate::{Cursor, Error, Parse, Peek, TokenReader};
 use alloc::string::ToString;
 use lang_lexing::{

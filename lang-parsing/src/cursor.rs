@@ -95,4 +95,23 @@ impl<'a, 'b, T> Cursor<'a, 'b, T> {
             current: self.current + offset,
         })
     }
+
+    pub fn offset(&self, offset: isize) -> Result<Cursor<'a, 'b, T>, Error> {
+        let len = self.tokens.len() as isize;
+        let idx = self.current as isize;
+        let new_idx = idx + offset;
+        let new_idx = if new_idx < 0 {
+            0
+        } else if new_idx > len {
+            (len as usize) - 1
+        } else {
+            new_idx as usize
+        };
+
+        Ok(Cursor {
+            input: self.input,
+            tokens: self.tokens,
+            current: new_idx,
+        })
+    }
 }
