@@ -1,13 +1,7 @@
 [workspace]
 
 
-members = [
-    "lang-macros",
-    "lang-lexing",
-    "lang-parsing",
-    "lang-vm",
-    "lang",
-]
+members = ["lang-macros", "lang-lexing", "lang-parsing", "lang-vm", "lang"]
 
 
 [profile.release]

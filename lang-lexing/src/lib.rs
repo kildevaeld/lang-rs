@@ -21,6 +21,7 @@ pub use self::{
     extract::Extract,
     lexer::{Lexer, LexerIterator},
     span::{Span, WithSpan},
+    string_ext::StringExt,
 };
 
 pub trait LexerFactory<'a, O>: Sized {

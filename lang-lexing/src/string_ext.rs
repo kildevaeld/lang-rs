@@ -13,6 +13,9 @@ pub trait StringExt: sealed::Sealed {
     fn is_whitespace(&self) -> bool;
 
     fn is_digit(&self) -> bool;
+
+    fn is_alphanumeric(&self) -> bool;
+    fn is_alphabetic(&self) -> bool;
 }
 
 impl<'a> StringExt for &'a str {
@@ -31,6 +34,13 @@ impl<'a> StringExt for &'a str {
     fn is_digit(&self) -> bool {
         self.chars().all(|m| m.is_ascii_digit())
     }
+
+    fn is_alphanumeric(&self) -> bool {
+        self.chars().all(|m| m.is_alphanumeric())
+    }
+    fn is_alphabetic(&self) -> bool {
+        self.chars().all(|m| m.is_alphabetic())
+    }
 }
 
 impl StringExt for char {
@@ -48,5 +58,12 @@ impl StringExt for char {
 
     fn is_digit(&self) -> bool {
         (*self).is_ascii_digit()
+    }
+
+    fn is_alphanumeric(&self) -> bool {
+        (*self).is_alphanumeric()
+    }
+    fn is_alphabetic(&self) -> bool {
+        (*self).is_alphabetic()
     }
 }
