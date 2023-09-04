@@ -172,3 +172,65 @@ where
         self.0.span()
     }
 }
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct WsOpt<T>(T);
+
+impl<T> WsOpt<T> {
+    pub fn into_inner(self) -> T {
+        self.0
+    }
+}
+
+impl<T> core::ops::Deref for WsOpt<T> {
+    type Target = T;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl<T> core::ops::DerefMut for WsOpt<T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
+impl<'a, T, TOKEN> Peek<'a, TOKEN> for WsOpt<T>
+where
+    T: Peek<'a, TOKEN>,
+    TOKEN: TokenRef<Whitespace<'a>> + TokenRef<Comment<'a>>,
+{
+    fn peek(cursor: TokenReader<'a, '_, TOKEN>) -> bool {
+        let mut i = 1;
+        while cursor.peek_offset::<Whitespace>(i) {
+            i += 1;
+        }
+
+        cursor.peek_offset::<T>(i)
+    }
+}
+
+impl<'a, T, TOKEN> Parse<'a, TOKEN> for WsOpt<T>
+where
+    T: Parse<'a, TOKEN>,
+    TOKEN: TokenRef<Whitespace<'a>> + TokenRef<Comment<'a>> + WithSpan,
+{
+    fn parse(mut state: crate::TokenReader<'a, '_, TOKEN>) -> Result<Self, crate::Error> {
+        while state.peek::<Whitespace>() {
+            state.eat::<Whitespace>()?;
+        }
+
+        let ws = WsOpt(state.parse::<T>()?);
+
+        Ok(ws)
+    }
+}
+
+impl<T> WithSpan for WsOpt<T>
+where
+    T: WithSpan,
+{
+    fn span(&self) -> lang_lexing::Span {
+        self.0.span()
+    }
+}
